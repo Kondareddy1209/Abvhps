@@ -328,12 +328,12 @@
         const gateMsg = document.getElementById('gate_message');
         
         if (!email) {
-            alert('Please enter a valid email target.');
+            alert('Please enter a valid email address.');
             return;
         }
 
         gateMsg.className = "text-xs font-semibold mt-2 text-blue-600 block";
-        gateMsg.innerText = "Withdrawing secure token from active transmission nodes...";
+        gateMsg.innerText = "Sending 6-digit verification code to your email...";
 
         try {
             let response = await fetch("{{ route('exam.send_otp') }}", {
@@ -349,11 +349,12 @@
                 document.getElementById('otp_input_wrapper').classList.remove('hidden');
             } else {
                 gateMsg.className = "text-xs font-semibold mt-2 text-red-600 block";
-                gateMsg.innerText = result.message;
+                gateMsg.innerText = result.message || 'Unable to send verification OTP.';
             }
         } catch (error) {
+            console.error("OTP Send Error:", error);
             gateMsg.className = "text-xs font-semibold mt-2 text-red-600 block";
-            gateMsg.innerText = "Connection lost during pipeline sync.";
+            gateMsg.innerText = "Unable to connect to the server. Please check your internet connection.";
         }
     }
 
@@ -362,7 +363,7 @@
         const gateMsg = document.getElementById('gate_message');
 
         if (!otp) {
-            alert('Please enter the 6-digit code.');
+            alert('Please enter the 6-digit verification code.');
             return;
         }
 
@@ -387,11 +388,12 @@
                 document.getElementById('main_exam_application_form').classList.remove('hidden');
             } else {
                 gateMsg.className = "text-xs font-semibold mt-2 text-red-600 block";
-                gateMsg.innerText = result.message;
+                gateMsg.innerText = result.message || 'Invalid or expired OTP.';
             }
         } catch (error) {
+            console.error("OTP Verification Error:", error);
             gateMsg.className = "text-xs font-semibold mt-2 text-red-600 block";
-            gateMsg.innerText = "Verification infrastructure timeout.";
+            gateMsg.innerText = "Unable to verify code. Please try again.";
         }
     }
 
@@ -470,7 +472,8 @@
                 }
             }
         } catch (error) {
-            alert('Membership registry desk did not respond.');
+            console.error("Member Verification Error:", error);
+            alert('Unable to connect to the membership verification registry. Please try again.');
         } finally {
             btn.disabled = false;
             btn.innerText = 'Verify';
@@ -520,10 +523,11 @@
                 document.getElementById('final_submit_wrapper').classList.remove('hidden');
             } else {
                 warningBanner.classList.remove('hidden');
-                warningBanner.innerText = "⚠️ " + result.message;
+                warningBanner.innerText = "⚠️ " + (result.message || 'Payment processing failed.');
             }
         } catch (error) {
-            alert('Payment Engine Breakdown.');
+            console.error("Payment Processing Error:", error);
+            alert('Payment processing failed. Please try again.');
         }
     }
 
@@ -545,23 +549,56 @@
 
         const formElement = document.getElementById('main_exam_application_form');
         const dataPacket = new FormData(formElement);
+        const submitBtn = formElement.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Submitting Application...";
+        }
 
         try {
             let response = await fetch("{{ route('exam.submit') }}", {
                 method: 'POST',
-                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') },
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json'
+                },
                 body: dataPacket
             });
-            let result = await response.json();
 
-            if (result.success) {
-                alert(result.message);
+            let result = null;
+            try {
+                result = await response.json();
+            } catch (parseErr) {
+                console.error("JSON parsing error on response:", parseErr);
+            }
+
+            if (response.ok && result && result.success) {
+                alert(result.message || 'Application submitted successfully!');
                 window.location.href = result.redirect_url;
             } else {
-                alert('Submission Error: ' + result.message);
+                let errorMsg = 'Something went wrong submitting your application. Please check your details and try again.';
+                if (result) {
+                    if (result.message) {
+                        errorMsg = result.message;
+                    }
+                    if (result.errors) {
+                        const errorList = Object.values(result.errors).flat().join('\n• ');
+                        errorMsg += '\n\n• ' + errorList;
+                    }
+                }
+                alert(errorMsg);
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = "SUBMIT OFFICIAL APPLICATION & GENERATE HALL TICKET";
+                }
             }
         } catch (error) {
-            alert('Critical terminal pipeline failure.');
+            console.error("Application Submission Exception:", error);
+            alert("Network connection issue. Please verify your connection and try again.");
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerText = "SUBMIT OFFICIAL APPLICATION & GENERATE HALL TICKET";
+            }
         }
     }
 </script>

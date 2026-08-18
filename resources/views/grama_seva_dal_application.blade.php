@@ -462,12 +462,13 @@
                 window.scrollTo({ top: 0, behavior: 'smooth' });
 
             } else {
-                alert('Submission Refused: ' + result.message);
+                alert('Submission Error: ' + (result.message || 'Please check all required fields.'));
             }
         } catch (error) {
             submitBtn.disabled = false;
             submitBtn.innerText = "Submit & Generate Official Service Charter";
-            alert('Critical infrastructure dataset transmission failure.');
+            console.error("Grama Seva Dal submission error:", error);
+            alert('Network error submitting application. Please verify your connection and try again.');
         }
     }
 

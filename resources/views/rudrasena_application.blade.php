@@ -335,7 +335,8 @@
         } catch (error) {
             verifyBtn.disabled = false;
             verifyBtn.innerText = "Verify Membership";
-            alert('Database query transmission pipeline synchronization failure.');
+            console.error("Verification error:", error);
+            alert('Unable to verify membership ID. Please check your connection and try again.');
         }
     }
 
@@ -347,10 +348,10 @@
         
         const submitBtn = document.getElementById('btn_rudrasena_submit');
         const formElement = document.getElementById('rudrasena_registration_form');
-        const packetData = new FormData(formElement); // Dynamically encapsulates all fields + files + family arrays
+        const packetData = new FormData(formElement);
 
         submitBtn.disabled = true;
-        submitBtn.innerText = "Securing Heavy Data Packet...";
+        submitBtn.innerText = "Submitting Application...";
 
         try {
             let response = await fetch("{{ route('rudrasena.submit') }}", {
@@ -366,18 +367,19 @@
             submitBtn.innerText = "Submit Rudrasena Application";
 
             if (result.success) {
-                alert(result.message);
+                alert(result.message || 'Application submitted successfully!');
                 formElement.reset();
                 document.getElementById('membership_gate_section').classList.add('hidden');
                 formElement.classList.add('hidden');
                 window.location.href = "/";
             } else {
-                alert('Submission Refused: ' + result.message);
+                alert('Submission Error: ' + (result.message || 'Please check all required fields.'));
             }
         } catch (error) {
             submitBtn.disabled = false;
             submitBtn.innerText = "Submit Rudrasena Application";
-            alert('Critical infrastructure large asset transmission failure.');
+            console.error("Submission error:", error);
+            alert('Network error submitting application. Please verify your connection and try again.');
         }
     }
 </script>

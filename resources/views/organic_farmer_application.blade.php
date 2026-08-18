@@ -485,12 +485,13 @@
                 window.scrollTo({ top: 0, behavior: 'smooth' });
 
             } else {
-                alert('Submission Refused: ' + result.message);
+                alert('Submission Error: ' + (result.message || 'Please verify all required fields.'));
             }
         } catch (error) {
             submitBtn.disabled = false;
             submitBtn.innerText = "Submit & Generate Organic Producer Certificate";
-            alert('Critical infrastructure agriculture dataset transmission failure.');
+            console.error("Farmer application submission error:", error);
+            alert('Network error submitting application. Please verify your connection and try again.');
         }
     }
 </script>

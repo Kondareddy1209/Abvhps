@@ -204,4 +204,56 @@ class ExamVerificationTest extends TestCase
             'payment_status' => 'success',
         ]);
     }
+
+    /**
+     * Test Complete Flow: Submitting application generates unique 11-digit hall ticket and renders exam_success_notice
+     */
+    public function test_full_application_submission_generates_hall_ticket_and_renders_success_view(): void
+    {
+        $sessionData = [
+            'exam_email_verified_status' => true,
+            'exam_email_target' => 'konda@gmail.com'
+        ];
+
+        $submitRes = $this->withSession($sessionData)->postJson(route('exam.submit'), [
+            'email' => 'konda@gmail.com',
+            'full_name' => 'KONDA REDDY',
+            'dob' => '2006-03-25',
+            'address' => 'Porumamilla, YSR Kadapa',
+            'mobile' => '9876543210',
+            'aadhaar_no' => '123456789012',
+            'guardian_type' => 'parents',
+            'father_membership_id' => '602505286340',
+            'mother_membership_id' => '915000111222',
+            'father_name' => 'SRI RAMA SHARMA',
+            'mother_name' => 'SITA DEVI SHARMA',
+            'school_college_name' => 'ZPHS High School Porumamilla',
+            'class_section' => '10th Class - A',
+            'photo' => UploadedFile::fake()->image('konda.jpg', 100, 100),
+            'id_card_or_signature' => UploadedFile::fake()->image('school_id.jpg', 100, 100),
+            'payment_transaction_id' => 'TXN_GATEWAY_SUCCESS_001',
+        ]);
+
+        $submitRes->assertStatus(200);
+        $submitRes->assertJson(['success' => true]);
+
+        $redirectUrl = $submitRes->json('redirect_url');
+        $this->assertNotEmpty($redirectUrl);
+
+        // Fetch application from DB
+        $app = \DB::table('exam_applications')->where('email', 'konda@gmail.com')->first();
+        $this->assertNotNull($app);
+        $this->assertEquals('KONDA REDDY', $app->full_name);
+        $this->assertEquals(11, strlen($app->hall_ticket_number));
+        $this->assertEquals('success', $app->payment_status);
+
+        // Follow redirect to success notice / hall ticket page
+        $successPageRes = $this->get($redirectUrl);
+        $successPageRes->assertStatus(200);
+        $successPageRes->assertSee('Application Secured & Verified!', false);
+        $successPageRes->assertSee($app->hall_ticket_number);
+        $successPageRes->assertSee('KONDA REDDY');
+        $successPageRes->assertSee('ZPHS High School Porumamilla');
+    }
 }
+

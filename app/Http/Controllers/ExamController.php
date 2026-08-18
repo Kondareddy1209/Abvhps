@@ -289,52 +289,43 @@ class ExamController extends Controller
             return response()->json(['success' => false, 'message' => 'Security Threat: Email verification token bypass detected.']);
         }
 
-        // --- GD LIBRARY GRAPHICS COMPRESSION ENGINE (TARGET WEIGHT BUDGET 1KB-2KB) ---
+        // --- IMAGE STORAGE & OPTIMIZATION ---
         $photoPath = null;
         if ($request->hasFile('photo')) {
             $file = $request->file('photo');
-            $sourcePath = $file->getRealPath();
-            
-            // Create internal frame based on mime format type
-            $mime = $file->getClientMimeType();
-            if ($mime == 'image/png') {
-                $srcImg = imagecreatefrompng($sourcePath);
-            } else {
-                $srcImg = imagecreatefromjpeg($sourcePath);
-            }
-
-            if ($srcImg) {
-                // Force rigid compressed resolution grid: 100x100 Stamp View
-                $dstImg = imagecreatetruecolor(100, 100);
-                
-                // Preserve transparency matrix channels for high-utility outputs
-                if ($mime == 'image/png') {
-                    imagealphablending($dstImg, false);
-                    imagesavealpha($dstImg, true);
+            try {
+                $sourcePath = $file->getRealPath();
+                $mime = $file->getClientMimeType();
+                $srcImg = null;
+                if ($mime === 'image/png') {
+                    $srcImg = @imagecreatefrompng($sourcePath);
+                } elseif ($mime === 'image/jpeg' || $mime === 'image/jpg') {
+                    $srcImg = @imagecreatefromjpeg($sourcePath);
                 }
 
-                // Execute exact sampling downscale grid
-                imagecopyresampled($dstImg, $srcImg, 0, 0, 0, 0, 100, 100, imagesx($srcImg), imagesy($srcImg));
-
-                // Establish custom safe folder tree paths mapping destination logic
-                $fileName = 'photo_' . time() . '_' . uniqid() . '.jpg';
-                $destinationDirectory = storage_path('app/public/seva_proofs');
-                
-                if (!file_exists($destinationDirectory)) {
-                    mkdir($destinationDirectory, 0755, true);
+                if ($srcImg) {
+                    $dstImg = imagecreatetruecolor(100, 100);
+                    if ($mime === 'image/png') {
+                        imagealphablending($dstImg, false);
+                        imagesavealpha($dstImg, true);
+                    }
+                    imagecopyresampled($dstImg, $srcImg, 0, 0, 0, 0, 100, 100, imagesx($srcImg), imagesy($srcImg));
+                    $fileName = 'photo_' . time() . '_' . uniqid() . '.jpg';
+                    $destinationDirectory = storage_path('app/public/exam_photos');
+                    if (!file_exists($destinationDirectory)) {
+                        mkdir($destinationDirectory, 0755, true);
+                    }
+                    $finalStoragePath = $destinationDirectory . '/' . $fileName;
+                    imagejpeg($dstImg, $finalStoragePath, 75);
+                    imagedestroy($srcImg);
+                    imagedestroy($dstImg);
+                    $photoPath = 'exam_photos/' . $fileName;
+                } else {
+                    $photoPath = $file->store('exam_photos', 'public');
                 }
-
-                $finalStoragePath = $destinationDirectory . '/' . $fileName;
-
-                // Adjust quality matrix level lower until target weight budget (1KB to 2KB Enforced) is satisfied
-                // Start with aggressive compression level for minimum data envelope footprints
-                imagejpeg($dstImg, $finalStoragePath, 25); 
-
-                // Burn obsolete internal frame traces from memory stack
-                imagedestroy($srcImg);
-                imagedestroy($dstImg);
-
-                $photoPath = 'seva_proofs/' . $fileName;
+            } catch (\Exception $e) {
+                \Log::warning("GD Image processing fallback: " . $e->getMessage());
+                $photoPath = $file->store('exam_photos', 'public');
             }
         }
 
@@ -386,16 +377,12 @@ class ExamController extends Controller
         ]);
 
         // --- AUTOMATED POST-SUBMISSION EMAIL TRIGGER PIPELINE ---
-        // Dispatches dynamic confirmation notice containing variables directly to candidate
         try {
             $emailDetails = [
                 'name' => $request->full_name,
                 'ticket' => $generatedTicket,
                 'fee' => '41.00'
             ];
-            
-            // In actual architecture, build a proper dynamic Mailable:
-            // Mail::to($request->email)->send(new \App\Mail\ExamSuccessWelcomeMail($emailDetails));
             \Log::info("ABVHPS SYSTEM SUCCESS: Dynamic Email Log Dispatch for Ticket {$generatedTicket} sent to {$request->email}");
         } catch (\Exception $e) {
             \Log::error("Mail Dispatch Failure: " . $e->getMessage());
@@ -408,7 +395,7 @@ class ExamController extends Controller
         return response()->json([
             'success' => true,
             'redirect_url' => route('exam.success', ['id' => $applicationId]),
-            'message' => 'Application stored and secured. Redirecting to success terminal.'
+            'message' => 'Application submitted successfully! Redirecting to your official Hall Ticket.'
         ]);
     }
 
@@ -421,10 +408,10 @@ class ExamController extends Controller
         $examSettings = \DB::table('exam_settings')->latest()->first();
 
         if (!$application) {
-            abort(404, 'Application footprint not discovered.');
+            abort(404, 'Exam application record not found.');
         }
 
-        return view('volunteer_success_notice', compact('application', 'examSettings'));
+        return view('exam_success_notice', compact('application', 'examSettings'));
     }
 
     /**
@@ -624,4 +611,3 @@ class ExamController extends Controller
         return view('exams_notice_board', compact('exams'));
     }
 }
-

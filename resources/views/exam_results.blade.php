@@ -177,12 +177,13 @@
                     `;
                     displayDesk.classList.remove('hidden');
                 } else {
-                    alert(result.message);
+                    alert(result.message || 'No examination record found for the provided Hall Ticket number.');
                 }
             } catch (error) {
                 submitBtn.disabled = false;
-                submitBtn.innerText = "Fetch Secured Result Logs";
-                alert('Result retrieval pipeline timed out.');
+                submitBtn.innerText = "Fetch Result";
+                console.error("Exam results retrieval error:", error);
+                alert('Unable to load examination results. Please verify your connection and try again.');
             }
         }
     </script>
