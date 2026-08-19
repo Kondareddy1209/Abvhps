@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('title', 'Sanathana Dharma Exams Notice Board | ABVHPS')
+@section('meta_description', 'Official announcement notice board and continuous cycle schedule for youth spiritual examinations conducted by ABVHPS.')
+
 @section('content')
 <div class="bg-gray-50 min-h-screen py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-7xl mx-auto space-y-10">

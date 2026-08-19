@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@section('title', 'Official Identity Verification | ABVHPS')
+@section('meta_robots', 'noindex, nofollow')
+@section('meta_description', 'Official public credential and document verification portal of ABVHPS.')
+
 @section('content')
 <section class="min-h-[70vh] bg-slate-50 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
     <div class="max-w-lg w-full bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">

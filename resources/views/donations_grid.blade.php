@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Dharma Seva Fundraising Campaigns | ABVHPS')
+@section('meta_description', 'Support active ABVHPS fundraising initiatives for temple construction, goshala developments, and sacred deity consecration across India.')
 
 @section('content')
 <div class="bg-gray-50 min-h-screen pb-16">
@@ -167,10 +168,11 @@
                     
                     <!-- 1. Central Native Social Share Linkage Channels Matrix (WhatsApp & Facebook Buttons) -->
                     <div class="grid grid-cols-2 gap-2">
-                        <a href="{{ $campaign->whatsapp_share }}" target="_blank" class="flex items-center justify-center gap-1.5 bg-[#25D366] hover:bg-opacity-90 text-white text-[11px] font-black py-2 px-3 rounded-lg shadow-sm uppercase tracking-wider transition">
-                            <span class="text-xs">🟢</span> WhatsApp Share
+                        <a href="{{ $campaign->whatsapp_share_url ?? $campaign->whatsapp_share }}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-1.5 bg-[#25D366] hover:bg-[#20ba59] text-white text-[11px] font-black py-2 px-3 rounded-lg shadow-sm uppercase tracking-wider transition" aria-label="Share {{ $campaign->title }} on WhatsApp">
+                            <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.072-2.176-.543-1.894-.787-3.111-2.724-3.206-2.85-.095-.125-.769-1.025-.769-1.954 0-.93.486-1.385.66-1.575.174-.189.38-.238.508-.238.127 0 .253.002.364.007.117.006.275-.044.429.327.16.386.547 1.332.595 1.43.048.098.08.213.016.338-.064.126-.096.205-.19.316-.095.111-.2.247-.286.332-.095.095-.194.198-.083.389.111.19.493.814 1.057 1.317.725.646 1.337.846 1.528.941.19.095.302.08.413-.048.111-.127.476-.556.603-.746.127-.19.254-.158.428-.095.175.063 1.111.524 1.301.62.19.095.317.143.365.222.048.079.048.46-.096.865z"/></svg>
+                            <span>WhatsApp Share</span>
                         </a>
-                        <a href="{{ $campaign->facebook_share }}" target="_blank" class="flex items-center justify-center gap-1.5 bg-[#1877F2] hover:bg-opacity-90 text-white text-[11px] font-black py-2 px-3 rounded-lg shadow-sm uppercase tracking-wider transition">
+                        <a href="{{ $campaign->facebook_share_url ?? $campaign->facebook_share }}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-1.5 bg-[#1877F2] hover:bg-opacity-90 text-white text-[11px] font-black py-2 px-3 rounded-lg shadow-sm uppercase tracking-wider transition" aria-label="Share {{ $campaign->title }} on Facebook">
                             <span class="text-xs">🔵</span> Facebook Share
                         </a>
                     </div>

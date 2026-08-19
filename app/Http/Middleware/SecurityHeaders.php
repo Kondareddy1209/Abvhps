@@ -48,6 +48,11 @@ class SecurityHeaders
             $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
         }
 
+        // 7. X-Robots-Tag Header Protection for Admin, Volunteer Portal & Private API routes
+        if ($request->is('admin*') || $request->is('volunteer/dashboard*') || $request->is('volunteer/member-data*') || $request->is('volunteer/profile*')) {
+            $response->headers->set('X-Robots-Tag', 'noindex, nofollow');
+        }
+
         return $response;
     }
 }

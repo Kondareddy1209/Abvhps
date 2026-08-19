@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\FundraisingCampaign;
 
 class HomeController extends Controller
 {
@@ -17,7 +18,7 @@ class HomeController extends Controller
         $projects = DB::table('our_supports')->where('status', 'show')->orderBy('sort_order', 'asc')->get();
 
         // Fetch active fundraising campaigns for home page showcase
-        $fundraisingCampaigns = DB::table('fundraisings')->where('is_active', true)->latest()->take(3)->get();
+        $fundraisingCampaigns = FundraisingCampaign::active()->orderBy('id', 'desc')->take(6)->get();
         $fundraising = $fundraisingCampaigns->first();
 
         // Fetch latest exam cycles with published results

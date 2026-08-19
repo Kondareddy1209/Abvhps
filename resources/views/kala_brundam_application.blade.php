@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('title', 'Kala Brundham Cultural Network | ABVHPS')
+@section('meta_description', 'Register your bhajana mandali, kirtan group, and traditional cultural arts team with the ABVHPS Kala Brundham network.')
+
 @section('content')
 <div class="max-w-4xl mx-auto py-10 px-4">
     

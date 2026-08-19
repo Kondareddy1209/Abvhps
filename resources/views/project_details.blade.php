@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@section('title', $project->name . ' | ABVHPS Core Service Projects')
+@section('meta_description', \Illuminate\Support\Str::limit(strip_tags($project->short_info), 150))
+@section('og_image', $project->image_path ? asset('storage/' . $project->image_path) : asset('images/ABVHPS_LOGO.jpg'))
+
 @section('content')
 <!-- Public Website Single Project Header Banner -->
 <div class="bg-gray-900 text-white py-12 text-center" style="background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('/assets/images/banner.jpg') no-repeat center center; background-size: cover;">

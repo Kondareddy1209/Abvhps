@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('title', 'Devotee Membership Portal | ABVHPS')
+@section('meta_description', 'Join the ABVHPS family as an official registered member to support temple restoration, goshalas, and social welfare programs.')
+
 @section('content')
 <section class="min-h-[500px] flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow border border-gray-100">

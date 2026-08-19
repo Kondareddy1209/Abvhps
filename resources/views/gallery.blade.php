@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Service Media Gallery | ABVHPS')
+@section('meta_description', 'Explore photographs and video documentation of ABVHPS temple renovation, goshala seva, blood donation camps, and community events.')
 
 @section('content')
 <div class="bg-gray-50 min-h-screen pb-16">

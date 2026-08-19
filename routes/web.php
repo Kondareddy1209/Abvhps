@@ -20,7 +20,8 @@ use App\Http\Controllers\VolunteerController;
 |--------------------------------------------------------------------------
 */
 
-Route::get('/', [HomeController::class, 'index']);
+Route::get('/', [HomeController::class, 'index'])->name('public.home');
+Route::get('/sitemap.xml', [\App\Http\Controllers\SitemapController::class, 'index'])->name('sitemap');
 
 use App\Http\Controllers\MembershipController;
 
@@ -250,7 +251,7 @@ Route::get('/admin/membership-ledger', [App\Http\Controllers\MembershipControlle
          // 1. Our Team Management Module Routes
     Route::get('/admin/team', [App\Http\Controllers\OurTeamController::class, 'index'])->name('admin.team.index')->middleware('auth:web');
     Route::get('/admin/team/create', [App\Http\Controllers\OurTeamController::class, 'create'])->name('admin.team.create')->middleware('auth:web');
-    Route::get('/our-team-members', [App\Http\Controllers\HomeController::class, 'team'])->name('public.team');
+    Route::get('/our-team-members', [App\Http\Controllers\HomeController::class, 'team'])->name('public.team_alias');
 
         // 2. Donation Ledger Module Routes (Connected to Official Donation Controller)
     Route::get('/admin/donations', [App\Http\Controllers\DonationController::class, 'index'])->name('admin.donations.index')->middleware('auth:web');
@@ -273,7 +274,7 @@ Route::get('/admin/membership-ledger', [App\Http\Controllers\MembershipControlle
         // 5. Our Support Cores Module Routes (Connected to Authentic OurSupport Controller)
     Route::get('/admin/support', [App\Http\Controllers\OurSupportController::class, 'index'])->name('admin.support.index')->middleware('auth:web');
     Route::get('/admin/support/create', [App\Http\Controllers\OurSupportController::class, 'create'])->name('admin.support.create')->middleware('auth:web');
-    Route::post('/admin/support/store', [App\Http\Controllers\OurSupportController::class, 'store'])->name('admin.our_support.store')->middleware('auth:web');
+    Route::post('/admin/support/store', [App\Http\Controllers\OurSupportController::class, 'store'])->name('admin.support.store')->middleware('auth:web');
     Route::get('/admin/support/edit/{id}', [App\Http\Controllers\OurSupportController::class, 'edit'])->name('admin.support.edit')->middleware('auth:web');
     Route::post('/admin/support/update/{id}', [App\Http\Controllers\OurSupportController::class, 'update'])->name('admin.support.update')->middleware('auth:web');
     Route::delete('/admin/support/delete/{id}', [App\Http\Controllers\OurSupportController::class, 'destroy'])->name('admin.support.delete')->middleware('auth:web');
