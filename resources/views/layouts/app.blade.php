@@ -171,5 +171,8 @@
         </div>
     </footer>
 
+    <!-- Floating WhatsApp Quick Connect Button -->
+    <x-whatsapp-floating-button />
+
 </body>
 </html>

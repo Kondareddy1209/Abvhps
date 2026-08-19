@@ -28,7 +28,7 @@ class ContactAdminNotificationMail extends Mailable
         $this->subject     = $data['subject'];
         $this->messageText = $data['message'];
         $this->source      = $data['source'] ?? 'CONTACT_FORM';
-        $this->submittedAt = $data['submitted_at'] ?? now()->format('d-M-Y H:i');
+        $this->submittedAt = $data['submitted_at'] ?? (now()->format('d M Y, h:i A') . ' IST');
     }
 
     public function envelope(): Envelope

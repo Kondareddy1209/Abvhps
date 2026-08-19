@@ -228,7 +228,7 @@ class VolunteerMemberDataController extends Controller
             'members' => $exportData,
             'areaSummary' => $areaSummary,
             'volunteer' => $volunteer,
-            'generatedAt' => now()->format('d M Y, h:i A'),
+            'generatedAt' => now()->format('d M Y, h:i A') . ' IST',
             'totalRecords' => count($exportData),
         ])->setPaper('a4', 'portrait');
 

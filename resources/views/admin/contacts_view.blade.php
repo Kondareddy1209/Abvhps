@@ -44,7 +44,7 @@
                 </div>
                 <div>
                     <span class="text-[10px] font-black text-gray-400 uppercase block">Received Timestamp</span>
-                    <span class="font-mono text-gray-600">{{ $message->created_at ? $message->created_at->format('d-M-Y H:i') : 'N/A' }}</span>
+                    <span class="font-mono text-gray-600">{{ $message->created_at ? $message->created_at->format('d M Y, h:i A') . ' IST' : 'N/A' }}</span>
                 </div>
             </div>
 

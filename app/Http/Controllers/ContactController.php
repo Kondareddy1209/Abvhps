@@ -83,7 +83,7 @@ class ContactController extends Controller
                     'subject'      => $contact->subject,
                     'message'      => $contact->message,
                     'source'       => $contact->source,
-                    'submitted_at' => $contact->created_at ? $contact->created_at->format('d-M-Y H:i') : now()->format('d-M-Y H:i'),
+                    'submitted_at' => $contact->created_at ? $contact->created_at->format('d M Y, h:i A') . ' IST' : now()->format('d M Y, h:i A') . ' IST',
                 ]));
             }
         } catch (\Exception $e) {
