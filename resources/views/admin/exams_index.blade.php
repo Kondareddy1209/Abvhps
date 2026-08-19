@@ -17,7 +17,9 @@
     {{-- ===================== SIDEBAR ===================== --}}
     <div class="w-64 bg-brandDark flex flex-col justify-between shadow-xl flex-shrink-0">
         <div class="p-4 border-b border-gray-800 flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-brandOrange text-white flex items-center justify-center font-black text-xs shadow-md">👑</div>
+            <div class="w-10 h-10 rounded-full overflow-hidden border border-brandOrange shadow-md flex items-center justify-center bg-white p-0.5 shrink-0">
+                <img src="{{ asset('images/ABVHPS_LOGO.jpg') }}" class="w-full h-full object-cover rounded-full" alt="ABVHPS">
+            </div>
             <div>
                 <h2 class="text-xs font-black tracking-widest text-brandOrange uppercase">ABVHPS CENTRAL BOARD</h2>
                 <span class="text-[9px] text-gray-400 font-bold uppercase tracking-wider block">Unified Management Console</span>
