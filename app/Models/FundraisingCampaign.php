@@ -89,7 +89,7 @@ class FundraisingCampaign extends Model
     public function getWhatsappShareUrlAttribute(): string
     {
         $campaignUrl = $this->public_url;
-        $cleanTitle = trim($this->title);
+        $cleanTitle = mb_strtoupper(trim($this->title));
         $cleanDesc = trim(strip_tags($this->description ?? ''));
         if ($cleanDesc) {
             $cleanDesc = \Illuminate\Support\Str::limit($cleanDesc, 140);
