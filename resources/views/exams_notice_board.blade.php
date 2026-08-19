@@ -4,6 +4,27 @@
 <div class="bg-gray-50 min-h-screen py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-7xl mx-auto space-y-10">
 
+    @php
+        $examBanner = \App\Models\Banner::getBannerForPage('exam');
+    @endphp
+
+    @if($examBanner && !empty($examBanner->desktop_banner))
+        <x-page-banner 
+            page="exam" 
+            default-title="Sanathana Dharma Exams Info Board" 
+            default-subtitle="Official announcement notice board and continuous cycle schedule for youth & community spiritual examinations conducted across Andhra Pradesh."
+            badge="Examination Core Desk"
+            min-height="280px"
+        />
+        <div class="pt-2 flex flex-wrap justify-center gap-3">
+            <a href="{{ route('exam.form') }}" class="bg-brandOrange hover:bg-orange-700 text-white font-black text-xs px-6 py-3 rounded-lg shadow uppercase tracking-wider transition">
+                Apply Online for Active Exam
+            </a>
+            <a href="{{ route('exam.results_portal') }}" class="bg-gray-800 hover:bg-gray-900 text-white font-black text-xs px-6 py-3 rounded-lg shadow uppercase tracking-wider transition">
+                Check Hall Ticket Results
+            </a>
+        </div>
+    @else
         <!-- Header Section -->
         <div class="text-center space-y-3">
             <span class="bg-orange-100 text-brandOrange text-xs font-black px-3.5 py-1 rounded-full uppercase tracking-widest border border-orange-200">
@@ -24,6 +45,7 @@
                 </a>
             </div>
         </div>
+    @endif
 
         <!-- Exam Cycles Notice Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -66,6 +88,20 @@
                             </span>
                         </div>
                         <div class="flex items-center justify-between border-b border-gray-100 pb-2.5">
+                            <span class="text-gray-400 font-bold uppercase text-[10px]">Exam Format / Type</span>
+                            <span class="font-bold text-gray-900 text-xs">
+                                @if($exam->exam_type === 'theory')
+                                    📝 Theory
+                                @elseif($exam->exam_type === 'mcq')
+                                    📊 MCQ
+                                @elseif($exam->exam_type === 'both')
+                                    📑 Both (Theory + MCQ)
+                                @else
+                                    Not Set
+                                @endif
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between border-b border-gray-100 pb-2.5">
                             <span class="text-gray-400 font-bold uppercase text-[10px]">Nominal Registration Fee</span>
                             <span class="font-mono font-black text-brandOrange text-sm">₹{{ number_format($exam->application_fee, 2) }}</span>
                         </div>
@@ -75,9 +111,9 @@
                             <span class="text-[10px] font-black text-gray-400 uppercase tracking-wider block mb-1.5">Grand Awards Matrix:</span>
                             <div class="bg-orange-50/60 p-3 rounded-xl border border-orange-100 space-y-1 text-[11px] font-semibold text-gray-800">
                                 @php
-                                    $prizes = is_array($exam->prize_details_json) ? $exam->prize_details_json : json_decode($exam->prize_details_json, true);
+                                    $prizes = $exam->prizes_list;
                                 @endphp
-                                @if(is_array($prizes) && count($prizes) > 0)
+                                @if(count($prizes) > 0)
                                     @foreach($prizes as $prize)
                                         <div class="flex items-center gap-2">
                                             <span>🏆</span> <span>{{ $prize }}</span>

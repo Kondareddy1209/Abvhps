@@ -157,6 +157,7 @@ class ExamVerificationTest extends TestCase
 
         // Attempt submission with invalid mother ID
         $resBlocked = $this->withSession($sessionData)->postJson(route('exam.submit'), [
+            'exam_setting_id' => 1,
             'email' => 'student@example.com',
             'full_name' => 'Candidate Sharma',
             'dob' => '2010-05-15',
@@ -178,6 +179,7 @@ class ExamVerificationTest extends TestCase
 
         // Attempt submission with BOTH valid IDs
         $resAllowed = $this->withSession($sessionData)->postJson(route('exam.submit'), [
+            'exam_setting_id' => 1,
             'email' => 'student@example.com',
             'full_name' => 'Candidate Sharma',
             'dob' => '2010-05-15',
@@ -216,6 +218,7 @@ class ExamVerificationTest extends TestCase
         ];
 
         $submitRes = $this->withSession($sessionData)->postJson(route('exam.submit'), [
+            'exam_setting_id' => 1,
             'email' => 'konda@gmail.com',
             'full_name' => 'KONDA REDDY',
             'dob' => '2006-03-25',

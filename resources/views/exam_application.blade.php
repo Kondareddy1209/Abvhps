@@ -1,43 +1,125 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-4xl mx-auto py-10 px-4">
-    <!-- Core Dynamic Header Desk -->
-    <div class="text-center bg-orange-600 text-white p-6 rounded-t-xl shadow-md border-b-4 border-yellow-400">
-        <h1 class="text-xl md:text-2xl font-extrabold tracking-wide uppercase">AKHANDA BHARATA VISWA HINDU PARIRAKSHANA SAMITI</h1>
-        <p class="text-yellow-200 mt-1 font-medium text-xs md:text-sm">www.abvhps.org</p>
-        <div class="mt-3 bg-yellow-400 text-orange-950 inline-block px-5 py-1.5 rounded-full font-bold text-sm shadow">
-            {{ $examSettings->exam_title }} Desk
+@if(!$examSettings)
+<div class="max-w-3xl mx-auto py-16 px-4">
+    <div class="bg-white rounded-2xl border border-gray-200 p-10 text-center shadow-sm">
+        <div class="text-4xl mb-3">📋</div>
+        <h2 class="text-lg font-black uppercase text-gray-800 tracking-wide">No Active Examinations Available</h2>
+        <p class="text-xs text-gray-500 max-w-md mx-auto mt-2">
+            There are currently no active examination registrations open. Please check back later for upcoming examination announcements.
+        </p>
+        <div class="mt-6 flex items-center justify-center gap-3">
+            <a href="{{ route('public.home') }}" class="bg-brandOrange text-white text-xs font-black px-5 py-2.5 rounded-lg uppercase shadow hover:bg-orange-700 transition">
+                Return to Home
+            </a>
+            <a href="{{ route('public.exams_board') }}" class="bg-gray-100 text-gray-700 text-xs font-bold px-5 py-2.5 rounded-lg uppercase hover:bg-gray-200 transition">
+                Exams Notice Board
+            </a>
+        </div>
+    </div>
+</div>
+@else
+<div class="bg-gray-50 min-h-screen pb-16">
+
+    {{-- Official Unified Header Banner --}}
+    <div class="bg-gray-900 text-white py-10 sm:py-12 px-4 border-b-4 border-brandOrange text-center shadow-md">
+        <div class="max-w-4xl mx-auto space-y-3">
+            <div class="w-16 h-16 rounded-full overflow-hidden bg-white border-2 border-brandOrange shadow mx-auto flex items-center justify-center p-0.5 shrink-0">
+                <img src="{{ asset('images/ABVHPS_LOGO.jpg') }}" class="w-full h-full object-cover rounded-full" alt="ABVHPS Logo">
+            </div>
+            <span class="bg-orange-500/15 text-orange-400 text-[10px] sm:text-[11px] font-black px-3.5 py-1 rounded-full uppercase tracking-widest inline-block border border-orange-500/30">
+                ABVHPS Examination Desk
+            </span>
+            <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold uppercase tracking-wide text-white">
+                Sanatana Dharma Examinations
+            </h1>
+            <p class="text-xs sm:text-sm text-gray-300 max-w-2xl mx-auto font-medium leading-relaxed">
+                Official examination application and candidate information centre
+            </p>
         </div>
     </div>
 
-    <!-- Prize & Syllabus Information Showcase Area -->
-    <div class="bg-white p-6 border-x border-gray-200 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-        <div class="bg-orange-50 p-4 rounded-lg border border-orange-200">
-            <span class="text-2xl">🥇</span>
-            <h3 class="font-bold text-orange-800 text-sm mt-1">1st Prize</h3>
-            <p class="text-xs font-semibold text-gray-700 mt-1">{{ $examSettings->prize_details_json['1st'] ?? 'Tablet' }}</p>
-        </div>
-        <div class="bg-orange-50 p-4 rounded-lg border border-orange-200">
-            <span class="text-2xl">🥈</span>
-            <h3 class="font-bold text-orange-800 text-sm mt-1">2nd Prize</h3>
-            <p class="text-xs font-semibold text-gray-700 mt-1">{{ $examSettings->prize_details_json['2nd'] ?? 'LED 32" TV' }}</p>
-        </div>
-        <div class="bg-orange-50 p-4 rounded-lg border border-orange-200">
-            <span class="text-2xl">🥉</span>
-            <h3 class="font-bold text-orange-800 text-sm mt-1">3rd Prize</h3>
-            <p class="text-xs font-semibold text-gray-700 mt-1">{{ $examSettings->prize_details_json['3rd'] ?? 'Steel Dinner Set' }}</p>
-        </div>
-    </div>
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 space-y-6">
+        
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            
+            {{-- Examination Context Header --}}
+            <div class="bg-gray-800 text-white p-5 sm:p-6 border-b-2 border-brandOrange flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-center sm:text-left">
+                <div>
+                    <span class="text-[10px] font-bold text-orange-400 uppercase tracking-widest block mb-0.5">Active Examination Cycle</span>
+                    <h2 class="text-lg sm:text-xl font-black text-white uppercase tracking-tight">{{ $examSettings->exam_title }}</h2>
+                </div>
+                <div>
+                    @php
+                        $examType = $examSettings->exam_type ?? null;
+                    @endphp
+                    @if($examType === 'theory')
+                        <span class="bg-indigo-950 text-indigo-200 border border-indigo-500/40 px-3.5 py-1.5 rounded-full font-black text-xs uppercase tracking-wider inline-block">
+                            📝 Theory Exam
+                        </span>
+                    @elseif($examType === 'mcq')
+                        <span class="bg-purple-950 text-purple-200 border border-purple-500/40 px-3.5 py-1.5 rounded-full font-black text-xs uppercase tracking-wider inline-block">
+                            📊 MCQ Exam
+                        </span>
+                    @elseif($examType === 'both')
+                        <span class="bg-amber-950 text-amber-200 border border-amber-500/40 px-3.5 py-1.5 rounded-full font-black text-xs uppercase tracking-wider inline-block">
+                            📑 Both (Theory + MCQ)
+                        </span>
+                    @endif
+                </div>
+            </div>
 
-    <!-- Center Details Notification Dashboard -->
-    <div class="bg-yellow-100 px-6 py-2.5 border-x border-gray-200 text-xs font-bold text-orange-950 flex flex-wrap justify-between gap-2">
-        <div>📍 Center: <span class="underline">{{ $examSettings->exam_center_location }}</span></div>
-        <div>📅 Date: <span>{{ date('d-M-Y h:i A', strtotime($examSettings->exam_date_time)) }}</span></div>
-    </div>
+            @if(isset($availableExams) && count($availableExams) > 1)
+                <!-- Multi-Exam Selection Strip -->
+                <div class="bg-gray-900 text-white p-3 px-5 border-b border-gray-700 flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <span class="font-bold text-gray-300">🎯 Select Examination:</span>
+                    <div class="flex flex-wrap gap-2">
+                        @foreach($availableExams as $avExam)
+                            <a href="{{ route('exam.form', ['exam_id' => $avExam->id]) }}" class="px-3 py-1 rounded-lg text-xs font-black uppercase transition {{ $examSettings->id == $avExam->id ? 'bg-brandOrange text-white shadow' : 'bg-gray-800 text-gray-300 hover:bg-gray-700' }}">
+                                {{ $avExam->exam_title }} ({{ $avExam->exam_type_label ?? 'Exam' }})
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
 
-    <!-- Main Form Container Desk -->
-    <div class="bg-white p-6 md:p-8 rounded-b-xl shadow-lg border-x border-b border-gray-200">
+            <!-- Prize Showcase Area (Dynamic per selected ExamSetting) -->
+            @php
+                $prizesList = $examSettings->prizes_list ?? [];
+            @endphp
+            @if(!empty($prizesList))
+                <div class="bg-orange-50/50 p-5 border-b border-orange-200/80">
+                    <h3 class="text-xs font-black uppercase text-orange-950 tracking-wider flex items-center gap-1.5 mb-3">
+                        <span>🏆</span> Prizes &amp; Awards
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+                        @foreach($prizesList as $prize)
+                            <div class="bg-white px-3.5 py-2.5 rounded-lg border border-orange-200 text-xs font-bold text-gray-800 shadow-xs flex items-center gap-2">
+                                <span class="text-brandOrange">🏆</span>
+                                <span class="truncate">{{ $prize }}</span>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
+            <!-- Center Details Notification Dashboard -->
+            <div class="bg-amber-50/60 px-6 py-3 border-b border-amber-200/60 text-xs font-bold text-gray-800 flex flex-wrap items-center justify-between gap-3">
+                <div>📍 Center: <span class="text-gray-900 font-semibold">{{ $examSettings->exam_center_location }}</span></div>
+                <div>📅 Date: <span class="text-gray-900 font-semibold">{{ date('d-M-Y h:i A', strtotime($examSettings->exam_date_time)) }}</span></div>
+                <div>💰 Fee: <span class="font-mono text-orange-700 font-black">₹{{ number_format($examSettings->application_fee ?? 41.00, 2) }}</span></div>
+                @if(!empty($examSettings->syllabus_pdf_path))
+                    <div>
+                        <a href="{{ route('exam.download_syllabus', ['id' => $examSettings->id]) }}" target="_blank" class="text-blue-700 hover:text-blue-900 underline flex items-center gap-1 font-bold">
+                            <span>📥</span> Download Syllabus PDF
+                        </a>
+                    </div>
+                @endif
+            </div>
+
+            <!-- Main Form Container Desk -->
+            <div class="p-6 md:p-8">
         
         <!-- STAGE 1: GATEWAY SECURITY FOR EMAIL OTP VERIFICATION -->
         <div id="email_gate_section" class="bg-gray-50 p-6 rounded-lg border-2 border-dashed border-gray-300 mb-6">
@@ -71,6 +153,7 @@
         <form id="main_exam_application_form" onsubmit="executeFinalSubmission(event)" enctype="multipart/form-data" class="hidden space-y-6">
             @csrf
             <!-- Dynamic Binding Parameters -->
+            <input type="hidden" name="exam_setting_id" id="bound_exam_setting_id" value="{{ $examSettings->id ?? 1 }}">
             <input type="hidden" name="email" id="bound_verified_email">
             <input type="hidden" name="payment_transaction_id" id="bound_txn_id">
 
@@ -240,6 +323,8 @@
                 </div>
             </div>
         </form>
+    </div>
+        </div>
     </div>
 </div>
 <!-- CORE JAVASCRIPT PIPELINES -->
@@ -602,4 +687,5 @@
         }
     }
 </script>
+@endif
 @endsection

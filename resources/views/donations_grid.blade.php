@@ -1,19 +1,68 @@
 @extends('layouts.app')
 
+@section('title', 'Dharma Seva Fundraising Campaigns | ABVHPS')
+
 @section('content')
-<div class="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
-    
-    <!-- CENTRAL FUNDRAISING GRID HEADER HERO BANNER -->
-    <div class="text-center bg-gradient-to-r from-brandDarkGray via-gray-800 to-brandDarkGray text-white p-8 rounded-2xl shadow-xl border-b-4 border-brandOrange mb-10">
-        <span class="text-5xl block mb-2 drop-shadow-md">🔱</span>
-        <h1 class="text-2xl md:text-4xl font-black tracking-widest uppercase text-brandOrange">DHARMA SEVA FUNDRAISING DESK</h1>
-        <p class="text-gray-300 mt-2 font-semibold text-xs md:text-base max-w-2xl mx-auto leading-relaxed">
-            Support our multi-parallel holy initiatives across various regions. Contribute transparently for Temple Constructions, Gosala Developments, and Sacred Idol Donations.
-        </p>
+<div class="bg-gray-50 min-h-screen pb-16">
+
+    @php
+        $fundraiseBanner = \App\Models\Banner::getBannerForPage('fundraise');
+    @endphp
+
+    {{-- Official Header Banner with Dynamic Admin Management and Fallback --}}
+    <div class="text-white border-b-4 border-brandOrange shadow-md relative overflow-hidden flex items-center justify-center"
+         style="min-height: 360px; @if(!$fundraiseBanner) background-image: url('{{ asset('images/fundraise_bg.png') }}'); background-size: cover; background-repeat: no-repeat; background-position: center center; @endif"
+         data-banner-page="fundraise">
+
+        @if($fundraiseBanner && !empty($fundraiseBanner->desktop_banner))
+            <picture class="absolute inset-0 w-full h-full">
+                @if(!empty($fundraiseBanner->mobile_banner))
+                    <source media="(max-width: 640px)" srcset="{{ asset('storage/' . $fundraiseBanner->mobile_banner) }}">
+                @endif
+                <source media="(min-width: 641px)" srcset="{{ asset('storage/' . $fundraiseBanner->desktop_banner) }}">
+                <img src="{{ asset('storage/' . $fundraiseBanner->desktop_banner) }}"
+                     alt="{{ $fundraiseBanner->title ?? 'Dharma Seva Fundraising Desk' }}"
+                     class="w-full h-full object-cover object-center"
+                     style="z-index: 0;">
+            </picture>
+        @endif
+
+        {{-- Protective vignette / overlay --}}
+        <div class="absolute inset-0 pointer-events-none"
+             style="background: rgba(5, 15, 30, @if($fundraiseBanner) 0.42 @else 0.15 @endif); z-index: 1;"></div>
+
+        {{-- Hero Content --}}
+        <div class="relative z-10 flex items-center justify-center py-12 sm:py-16 px-4 w-full">
+            <div class="text-center max-w-2xl mx-auto space-y-3">
+                <div class="inline-block w-full rounded-2xl px-6 py-5"
+                     style="background: rgba(255,255,255,0.08); backdrop-filter: blur(2px);">
+
+                    <div class="w-16 h-16 rounded-full overflow-hidden bg-white border-2 border-brandOrange shadow mx-auto flex items-center justify-center p-0.5 shrink-0 mb-3">
+                        <img src="{{ asset('images/ABVHPS_LOGO.jpg') }}" class="w-full h-full object-cover rounded-full" alt="ABVHPS Logo">
+                    </div>
+
+                    <span class="bg-orange-500/20 text-orange-200 text-[10px] sm:text-[11px] font-black px-3.5 py-1 rounded-full uppercase tracking-widest inline-block border border-orange-400/40 mb-1"
+                          style="text-shadow: 0 1px 3px rgba(0,0,0,0.5);">
+                        {{ ($fundraiseBanner && $fundraiseBanner->page_name) ? $fundraiseBanner->page_name : 'ABVHPS Dharma Seva' }}
+                    </span>
+
+                    <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold uppercase tracking-wide text-white"
+                        style="text-shadow: 0 2px 8px rgba(0,0,0,0.55), 0 1px 2px rgba(0,0,0,0.4);">
+                        {{ ($fundraiseBanner && !empty($fundraiseBanner->title)) ? $fundraiseBanner->title : 'Dharma Seva Fundraising Desk' }}
+                    </h1>
+
+                    <p class="text-xs sm:text-sm max-w-xl mx-auto font-medium leading-relaxed mt-2 text-gray-100"
+                       style="text-shadow: 0 1px 4px rgba(0,0,0,0.5);">
+                        {{ ($fundraiseBanner && !empty($fundraiseBanner->subtitle)) ? $fundraiseBanner->subtitle : 'Support our multi-parallel holy initiatives across various regions. Contribute transparently for Temple Constructions, Gosala Developments, and Sacred Idol Donations.' }}
+                    </p>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- MAIN INTERACTIVE MULTI-CAMPAIGN PARALLEL GRID MATRIX -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+    {{-- Main Interactive Multi-Campaign Grid Container --}}
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         
         @forelse($campaigns as $campaign)
             <!-- INDIVIDUAL CAMPAIGN SECURED CARD NODE -->
@@ -142,6 +191,7 @@
     </div>
 @endforelse
 
+        </div>
     </div>
 </div>
 

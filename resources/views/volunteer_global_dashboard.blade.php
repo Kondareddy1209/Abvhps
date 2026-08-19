@@ -29,7 +29,7 @@
         <div class="bg-white p-5 rounded-xl shadow border-b-4 border-brandOrange text-center">
             <span class="text-2xl block mb-1">🌍</span>
             <span class="text-[10px] font-black text-gray-400 uppercase tracking-wider block">Total Mapped Force Strength</span>
-            <span class="text-xl font-black text-brandGray block mt-0.5">{{ $totalActiveVolunteersCount ?? 1450 }} Registered</span>
+            <span class="text-xl font-black text-brandGray block mt-0.5">{{ $totalActiveVolunteersCount ?? 0 }} Registered</span>
         </div>
         <!-- Live Counter Card 2 -->
         <div class="bg-white p-5 rounded-xl shadow border-b-4 border-orange-500 text-center">

@@ -172,7 +172,7 @@
         
         
         <div style="text-align: center;">
-            <div style="font-size: 36px; margin-bottom: 2px;">🔱</div>
+            <img src="{{ asset('images/ABVHPS_LOGO.jpg') }}" style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover; margin: 0 auto 6px auto; display: block; border: 2px solid #E65100;" alt="ABVHPS Logo">
             <h1 class="branding-title">Akhanda Bharata</h1>
             <p class="branding-sub">Viswa Hindu Parirakshana Samiti</p>
         </div>

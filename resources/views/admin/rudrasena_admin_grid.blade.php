@@ -265,7 +265,9 @@
                             @empty
                                 <tr>
                                     <td colspan="10" class="px-6 py-12 text-center font-bold text-gray-400 uppercase tracking-wider">
-                                        <span class="text-2xl block mb-1">🔱</span>
+                                        <div class="w-10 h-10 rounded-full overflow-hidden bg-white border border-gray-300 mx-auto flex items-center justify-center p-0.5 mb-1">
+                                            <img src="{{ asset('images/ABVHPS_LOGO.jpg') }}" class="w-full h-full object-cover rounded-full" alt="ABVHPS Logo">
+                                        </div>
                                         No Rudrasena Dal application records found in the roster.
                                     </td>
                                 </tr>

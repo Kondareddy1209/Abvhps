@@ -171,10 +171,11 @@ class OurTeamController extends Controller
 
         $displayCadre = $cadreLabels[$member->cadre_level] ?? 'Verified Active Leader';
         $photoAsset = $member->image_path ? asset('storage/' . $member->image_path) : 'https://placeholder.com';
+        $logoAsset = asset('images/ABVHPS_LOGO.jpg');
         
         $htmlOutput = "
         <div style='max-width: 450px; margin: 30px auto; font-family: sans-serif; padding: 20px; border: 4px solid #EA580C; border-radius: 12px; text-align: center; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);'>
-            <div style='font-size: 40px;'>🔱</div>
+            <div style='margin-bottom: 8px;'><img src='{$logoAsset}' style='width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid #EA580C; display: inline-block;' alt='ABVHPS Logo'></div>
             <h2 style='color: #1F2937; margin: 5px 0; font-size: 16px; font-weight: 900; letter-spacing: 0.5px;'>AKHANDA BHARATA VISWA HINDU PARIRAKSHANA SAMITI</h2>
             <span style='background: #16A34A; color: white; font-size: 10px; font-weight: 900; padding: 3px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px; display: inline-block; margin-top: 5px;'>✓ Verified Official Leader</span>
             

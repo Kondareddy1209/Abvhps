@@ -28,7 +28,7 @@
                         <input type="text" id="farmer_lookup_id" maxlength="12" class="w-full border border-gray-300 rounded px-3 py-2 font-mono text-base tracking-widest focus:ring-2 focus:ring-emerald-600 outline-none bg-white shadow-inner" placeholder="915XXXXXXXXX">
                     </div>
                     <div>
-                        
+                        <button type="button" onclick="verifyFarmerIdentity()" id="btn_verify_farmer" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2.5 px-4 rounded text-xs uppercase tracking-wider transition shadow cursor-pointer">
                             Verify Farmer ID
                         </button>
                     </div>
@@ -186,7 +186,9 @@
             
             
             <div class="text-center space-y-2 border-b-2 border-dashed border-emerald-700/30 pb-4">
-                <div class="inline-block text-4xl p-2 bg-emerald-50 rounded-full border border-emerald-700/20 shadow-inner">🔱</div>
+                <div class="w-16 h-16 rounded-full overflow-hidden bg-white border-2 border-emerald-700/40 shadow-sm mx-auto flex items-center justify-center p-0.5">
+                    <img src="{{ asset('images/ABVHPS_LOGO.jpg') }}" class="w-full h-full object-cover rounded-full" alt="ABVHPS Logo">
+                </div>
                 <h2 class="text-xl md:text-3xl font-black tracking-widest text-brandGray">AKHANDA BHARATHA VISWA HINDU PARIRAKSHANA SAMITI</h2>
                 <span class="inline-block bg-emerald-700 text-white text-[10px] font-black px-4 py-1 rounded tracking-widest uppercase shadow-sm">Official Cow-Based Natural Agriculture Wing</span>
             </div>

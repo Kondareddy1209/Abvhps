@@ -1,16 +1,22 @@
 @extends('layouts.app')
 
-@section('content')
-<!-- Public Website Gallery Page Header Banner -->
-<div class="bg-gray-900 text-white py-12 text-center" style="background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('/assets/images/banner.jpg') no-repeat center center; background-size: cover;">
-    <div class="container mx-auto px-4">
-        <h1 class="text-3xl md:text-4xl font-bold uppercase tracking-wide text-orange-500">🔱 Service Media Gallery</h1>
-        <p class="text-xs md:text-sm text-gray-300 mt-2 uppercase tracking-widest">Live glimpses of our social and religious service events</p>
-    </div>
-</div>
+@section('title', 'Service Media Gallery | ABVHPS')
 
-<div class="py-12 bg-gray-50/50">
-    <div class="container mx-auto px-4">
+@section('content')
+<div class="bg-gray-50 min-h-screen pb-16">
+
+    {{-- Official Page Banner with Dynamic Admin Management and Fallback --}}
+    <x-page-banner 
+        page="gallery" 
+        default-title="Service Media Gallery" 
+        default-subtitle="Live glimpses of our social, cultural, and religious service activities across India"
+        default-bg="images/gallery-hero.png"
+        badge="ABVHPS Service Media"
+        min-height="320px"
+    />
+
+    {{-- Main Gallery Container --}}
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
         <!-- Live Admin Media Display Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             @forelse($galleryItems as $item)
@@ -38,7 +44,7 @@
 
                     <!-- Card Info Footer -->
                     <div class="p-3 bg-gray-50 border-t border-gray-100 flex justify-between items-center text-[10px] text-gray-400 font-semibold">
-                        <span>🔱 ABVHPS Service</span>
+                        <span>🏛️ ABVHPS Service</span>
                         <span>{{ \Carbon\Carbon::parse($item->created_at)->format('d-M-Y') }}</span>
                     </div>
 

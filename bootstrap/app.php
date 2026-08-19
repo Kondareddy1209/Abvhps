@@ -11,7 +11,15 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->web(append: [
+            \App\Http\Middleware\SecurityHeaders::class,
+        ]);
+
+        $middleware->alias([
+            'volunteer.auth' => \App\Http\Middleware\EnsureVolunteerIsApproved::class,
+            'volunteer.password' => \App\Http\Middleware\EnsureVolunteerChangedPassword::class,
+            'security.headers' => \App\Http\Middleware\SecurityHeaders::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

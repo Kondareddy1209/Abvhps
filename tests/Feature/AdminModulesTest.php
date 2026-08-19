@@ -85,6 +85,7 @@ class AdminModulesTest extends TestCase
     {
         $response = $this->actingAs($this->admin)->post(route('admin.exams.store'), [
             'exam_title' => 'Sanathana Dharma Youth Exam Cycle 3',
+            'exam_type' => 'mcq',
             'exam_date_time' => '2026-11-20 10:00:00',
             'exam_center_location' => 'Kadapa Central Hall',
             'application_fee' => 51.00,

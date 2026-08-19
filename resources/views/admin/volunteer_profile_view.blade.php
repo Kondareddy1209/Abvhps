@@ -107,7 +107,9 @@
                     <p class="text-[11px] text-gray-500 font-semibold mt-0.5">
                         Membership ID: <span class="font-mono text-brandOrange font-bold">{{ implode(' ', str_split($volunteer->membership_id, 4)) }}</span>
                         @if($volunteer->volunteer_id)
-                            | Volunteer ID: <span class="font-mono text-emerald-700 font-bold">{{ implode(' ', str_split($volunteer->volunteer_id, 2)) }}</span>
+                            | Volunteer ID: <span class="font-mono text-emerald-700 font-bold">{{ $volunteer->volunteer_id }}</span>
+                        @else
+                            | Volunteer ID: <span class="font-mono text-gray-400 italic">Not Assigned</span>
                         @endif
                     </p>
                 </div>
@@ -166,7 +168,11 @@
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-gray-100 text-xs">
+                        <div class="grid grid-cols-1 sm:grid-cols-5 gap-3 pt-3 border-t border-gray-100 text-xs">
+                            <div class="bg-gray-50 p-2.5 rounded-lg border border-gray-100">
+                                <span class="block text-[9px] font-bold text-gray-400 uppercase tracking-wider">Volunteer ID</span>
+                                <span class="font-mono font-black text-orange-600 text-sm">{{ $volunteer->volunteer_id ?? ($volunteer->volunteer_login_id ?? 'Pending') }}</span>
+                            </div>
                             <div class="bg-gray-50 p-2.5 rounded-lg border border-gray-100">
                                 <span class="block text-[9px] font-bold text-gray-400 uppercase tracking-wider">Contact Phone</span>
                                 <span class="font-mono font-black text-gray-800">{{ $volunteer->phone }}</span>
@@ -176,10 +182,31 @@
                                 <span class="font-mono font-semibold text-gray-800 truncate block">{{ $volunteer->email }}</span>
                             </div>
                             <div class="bg-gray-50 p-2.5 rounded-lg border border-gray-100">
-                                <span class="block text-[9px] font-bold text-gray-400 uppercase tracking-wider">Voter ID Number</span>
+                                <span class="block text-[9px] font-bold text-gray-400 uppercase tracking-wider">Voter ID</span>
                                 <span class="font-mono font-bold text-gray-800 uppercase">{{ $volunteer->voter_id_number }}</span>
                             </div>
+                            <div class="bg-gray-50 p-2.5 rounded-lg border border-gray-100">
+                                <span class="block text-[9px] font-bold text-gray-400 uppercase tracking-wider">Account / Login</span>
+                                <span class="font-bold {{ $volunteer->status === 'approved' ? 'text-emerald-700' : 'text-amber-700' }}">
+                                    {{ $volunteer->status === 'approved' ? 'ACTIVE (ENABLED)' : 'DISABLED' }}
+                                </span>
+                            </div>
                         </div>
+
+                        @if($volunteer->status === 'approved')
+                            <div class="pt-3 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3">
+                                <div class="text-xs text-gray-500">
+                                    <span>Welcome Email: </span>
+                                    <span class="font-bold text-gray-800 font-mono">{{ $volunteer->welcome_email_sent_at ? 'SENT / LOGGED (' . \Carbon\Carbon::parse($volunteer->welcome_email_sent_at)->format('d-M-Y H:i') . ')' : 'LOGGED' }}</span>
+                                </div>
+                                <form action="{{ route('admin.volunteers.resendCredentials', $volunteer->id) }}" method="POST" onsubmit="return confirm('Generate fresh temporary password and resend welcome credentials to {{ $volunteer->email }}?');" class="inline">
+                                    @csrf
+                                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] px-3.5 py-1.5 rounded-lg shadow-sm uppercase tracking-wider transition cursor-pointer">
+                                        📩 Resend Welcome Credentials
+                                    </button>
+                                </form>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>

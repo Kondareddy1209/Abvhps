@@ -146,7 +146,9 @@
     <div class="card-container">
         <!-- Header Strip -->
         <div class="header-strip">
-            <div style="font-size: 16pt; margin-bottom: 2px;">🔱</div>
+            @if(file_exists(public_path('images/ABVHPS_LOGO.jpg')))
+                <img src="{{ public_path('images/ABVHPS_LOGO.jpg') }}" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; margin-bottom: 2px; border: 1.5px solid #ffffff;" alt="ABVHPS Logo">
+            @endif
             <h1 class="header-title">ABVHPS RUDRASENA DAL</h1>
             <div class="header-subtitle">Akhanda Bharatha Viswa Hindu Parirakshana Samiti</div>
             <div class="badge-pill">Official Rudrasena Volunteer Identity Card</div>

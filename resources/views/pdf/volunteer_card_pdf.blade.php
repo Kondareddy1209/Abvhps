@@ -179,7 +179,7 @@
         <table class="details-table">
             <tr>
                 <td class="label-cell">Volunteer ID</td>
-                <td class="value-cell id-highlight">: {{ $volunteerData['formatted_volunteer_id'] ?? 'N/A' }}</td>
+                <td class="value-cell id-highlight">: {{ $volunteerData['volunteer_id'] ?? ($volunteerData['formatted_volunteer_id'] ?? 'N/A') }}</td>
             </tr>
             <tr>
                 <td class="label-cell">Designation</td>
@@ -202,6 +202,18 @@
                 <td class="value-cell">: {{ $volunteerData['membership_id'] ?? 'N/A' }}</td>
             </tr>
         </table>
+
+        <!-- Dynamic Official Verification QR Code -->
+        <div class="qr-section">
+            @php
+                $cleanVolId = $volunteerData['volunteer_id'] ?? ($volunteerData['formatted_volunteer_id'] ?? '000000');
+                $secureVerificationUrl = url('/verify/volunteer/' . $cleanVolId);
+            @endphp
+            <div style="display: inline-block; background: #ffffff; padding: 4px; border: 1px solid #cbd5e1; border-radius: 4px;">
+                {!! QrCode::size(55)->margin(0)->generate($secureVerificationUrl) !!}
+            </div>
+            <div style="font-size: 6pt; color: #64748b; font-weight: bold; margin-top: 2px; text-transform: uppercase;">Scan to Verify Accreditation</div>
+        </div>
 
         <!-- Footer Bottom Line -->
         <div class="footer-banner">

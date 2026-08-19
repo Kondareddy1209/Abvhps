@@ -27,10 +27,10 @@
             </div>
 
             
-            <!-- Dynamic 6-Digit Random Code space formatted as 66 24 24 -->
+            <!-- Dynamic Volunteer ID format (e.g. RS0001) -->
             <div class="flex items-center">
-                <span class="w-[100px] text-[11px] uppercase tracking-wide">Volunteer Id</span>
-                <span class="text-brandOrange font-black tracking-widest text-sm flex-1">: {{ $volunteerData['formatted_volunteer_id'] ?? 'N/A' }}</span>
+                <span class="w-[100px] text-[11px] uppercase tracking-wide">Volunteer ID</span>
+                <span class="text-brandOrange font-black tracking-widest text-sm flex-1">: {{ $volunteerData['volunteer_id'] ?? ($volunteerData['formatted_volunteer_id'] ?? 'N/A') }}</span>
             </div>
 
             <!-- Designation Set manually by Admin Entry -->
@@ -62,8 +62,8 @@
         <!-- 4. Native Vector QR Code Engine - Placed centrally at the lower base layout section -->
         <div class="absolute bottom-[28px] left-[135px] w-[68px] h-[68px] bg-white border border-gray-200 p-1 z-10 flex items-center justify-center rounded shadow-sm overflow-hidden">
             @php
-                $cleanCodeId = isset($volunteerData['clean_volunteer_id']) ? $volunteerData['clean_volunteer_id'] : '000000';
-                $secureVerificationUrl = "https://abvhps.org" . $cleanCodeId;
+                $cleanCodeId = $volunteerData['volunteer_id'] ?? ($volunteerData['clean_volunteer_id'] ?? '000000');
+                $secureVerificationUrl = url('/verify/volunteer/' . $cleanCodeId);
             @endphp
             <!-- Directly rendering the local scannable svg matrix grid blocks -->
             {!! QrCode::size(60)->margin(0)->generate($secureVerificationUrl) !!}

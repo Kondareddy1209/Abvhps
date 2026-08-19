@@ -16,8 +16,21 @@ class HomeController extends Controller
         // Fetch all active core projects from database
         $projects = DB::table('our_supports')->where('status', 'show')->orderBy('sort_order', 'asc')->get();
 
-        // Fetch the latest active fundraising campaign from database
-        $fundraising = DB::table('fundraisings')->where('is_active', true)->latest()->first();
+        // Fetch active fundraising campaigns for home page showcase
+        $fundraisingCampaigns = DB::table('fundraisings')->where('is_active', true)->latest()->take(3)->get();
+        $fundraising = $fundraisingCampaigns->first();
+
+        // Fetch latest exam cycles with published results
+        $publishedExams = DB::table('exam_settings')
+            ->whereExists(function($q) {
+                $q->select(DB::raw(1))
+                  ->from('exam_applications')
+                  ->whereColumn('exam_applications.exam_setting_id', 'exam_settings.id')
+                  ->where('exam_applications.result_publication_status', 'published');
+            })
+            ->latest('id')
+            ->take(3)
+            ->get();
 
         // Static counts representing live database connection in future updates
         $liveCounts = [
@@ -28,10 +41,16 @@ class HomeController extends Controller
         ];
 
         // Pass all database items to the view folder
-        return view('home', compact('sliders', 'projects', 'fundraising', 'liveCounts'));
+        return view('home', compact('sliders', 'projects', 'fundraising', 'fundraisingCampaigns', 'liveCounts', 'publishedExams'));
     }
 
-    // 2. Public Website Gallery Page Node
+    // 2. Public Website About Page Node
+    public function about()
+    {
+        return view('about');
+    }
+
+    // 3. Public Website Gallery Page Node
     public function gallery()
     {
         // Fetch all active photos and videos uploaded from admin panel
@@ -49,13 +68,151 @@ class HomeController extends Controller
         return view('blogs', compact('blogs'));
     }
 
-    // 4. Public Website Our Team Leadership Page Node
-    public function team()
+    // 4. Public Website Our Team Leadership Page Node (Official Approved Volunteers Directory)
+    public function team(Request $request)
     {
-        // Fetch all onboarded committee leaders from admin panel
-        $teamMembers = DB::table('our_teams')->orderBy('id', 'asc')->get();
+        // Base approved pool for calculating dynamic counts and dropdown options
+        $approvedBase = \App\Models\Volunteer::with('membership')->approved()->get();
 
-        return view('team', compact('teamMembers'));
+        $selectedCadre    = $request->query('cadre');
+        $selectedCountry  = $request->query('country');
+        $selectedState    = $request->query('state');
+        $selectedDistrict = $request->query('district');
+        $selectedAssembly = $request->query('assembly_segment') ?: $request->query('taluk');
+        $selectedMandal   = $request->query('mandal');
+        $selectedPanchayat= $request->query('panchayat') ?: $request->query('grama_panchayat');
+        $searchQuery      = $request->query('search');
+
+        // Dynamic distinct lists with real counts for cascading navigation
+        $cadres = $approvedBase->map(fn($v) => $v->cadre_label)->filter()->unique()->values();
+
+        $countries = $approvedBase->map(fn($v) => $v->resolved_country)->filter()->unique()->values();
+
+        $states = $approvedBase->filter(function($v) use ($selectedCountry) {
+            return empty($selectedCountry) || strcasecmp($v->resolved_country, $selectedCountry) === 0;
+        })->map(fn($v) => $v->resolved_state)->filter()->unique()->values();
+
+        $districts = $approvedBase->filter(function($v) use ($selectedCountry, $selectedState) {
+            $matchCountry = empty($selectedCountry) || strcasecmp($v->resolved_country, $selectedCountry) === 0;
+            $matchState   = empty($selectedState)   || strcasecmp($v->resolved_state, $selectedState) === 0;
+            return $matchCountry && $matchState;
+        })->map(fn($v) => $v->resolved_district)->filter()->unique()->values();
+
+        $assemblies = $approvedBase->filter(function($v) use ($selectedCountry, $selectedState, $selectedDistrict) {
+            $matchCountry  = empty($selectedCountry)  || strcasecmp($v->resolved_country, $selectedCountry) === 0;
+            $matchState    = empty($selectedState)    || strcasecmp($v->resolved_state, $selectedState) === 0;
+            $matchDistrict = empty($selectedDistrict) || strcasecmp($v->resolved_district, $selectedDistrict) === 0;
+            return $matchCountry && $matchState && $matchDistrict;
+        })->map(fn($v) => $v->resolved_assembly_segment)->filter()->unique()->values();
+
+        $mandals = $approvedBase->filter(function($v) use ($selectedCountry, $selectedState, $selectedDistrict, $selectedAssembly) {
+            $matchCountry  = empty($selectedCountry)  || strcasecmp($v->resolved_country, $selectedCountry) === 0;
+            $matchState    = empty($selectedState)    || strcasecmp($v->resolved_state, $selectedState) === 0;
+            $matchDistrict = empty($selectedDistrict) || strcasecmp($v->resolved_district, $selectedDistrict) === 0;
+            $matchAssembly = empty($selectedAssembly) || strcasecmp($v->resolved_assembly_segment, $selectedAssembly) === 0;
+            return $matchCountry && $matchState && $matchDistrict && $matchAssembly;
+        })->map(fn($v) => $v->resolved_mandal)->filter()->unique()->values();
+
+        $panchayats = $approvedBase->filter(function($v) use ($selectedCountry, $selectedState, $selectedDistrict, $selectedAssembly, $selectedMandal) {
+            $matchCountry  = empty($selectedCountry)  || strcasecmp($v->resolved_country, $selectedCountry) === 0;
+            $matchState    = empty($selectedState)    || strcasecmp($v->resolved_state, $selectedState) === 0;
+            $matchDistrict = empty($selectedDistrict) || strcasecmp($v->resolved_district, $selectedDistrict) === 0;
+            $matchAssembly = empty($selectedAssembly) || strcasecmp($v->resolved_assembly_segment, $selectedAssembly) === 0;
+            $matchMandal   = empty($selectedMandal)   || strcasecmp($v->resolved_mandal, $selectedMandal) === 0;
+            return $matchCountry && $matchState && $matchDistrict && $matchAssembly && $matchMandal;
+        })->map(fn($v) => $v->resolved_grama_panchayat)->filter()->unique()->values();
+
+        // Main paginated query strictly for APPROVED & ACTIVE volunteers
+        $volunteersQuery = \App\Models\Volunteer::with('membership')->approved();
+
+        if (!empty($selectedCadre)) {
+            $volunteersQuery->where(function($q) use ($selectedCadre) {
+                $q->where('cadre', $selectedCadre)
+                  ->orWhere('designation', $selectedCadre);
+            });
+        }
+
+        if (!empty($selectedCountry)) {
+            $volunteersQuery->where(function($q) use ($selectedCountry) {
+                $q->where('country', $selectedCountry)
+                  ->orWhereHas('membership', fn($mq) => $mq->where('country', $selectedCountry));
+            });
+        }
+
+        if (!empty($selectedState)) {
+            $volunteersQuery->where(function($q) use ($selectedState) {
+                $q->where('state', $selectedState)
+                  ->orWhereHas('membership', fn($mq) => $mq->where('state', $selectedState));
+            });
+        }
+
+        if (!empty($selectedDistrict)) {
+            $volunteersQuery->where(function($q) use ($selectedDistrict) {
+                $q->where('district', $selectedDistrict)
+                  ->orWhereHas('membership', fn($mq) => $mq->where('district', $selectedDistrict));
+            });
+        }
+
+        if (!empty($selectedAssembly)) {
+            $volunteersQuery->where(function($q) use ($selectedAssembly) {
+                $q->where('assembly_segment', $selectedAssembly)
+                  ->orWhereHas('membership', fn($mq) => $mq->where('assembly_segment', $selectedAssembly));
+            });
+        }
+
+        if (!empty($selectedMandal)) {
+            $volunteersQuery->where(function($q) use ($selectedMandal) {
+                $q->where('mandal', $selectedMandal)
+                  ->orWhereHas('membership', fn($mq) => $mq->where('mandal', $selectedMandal));
+            });
+        }
+
+        if (!empty($selectedPanchayat)) {
+            $volunteersQuery->where(function($q) use ($selectedPanchayat) {
+                $q->where('grama_panchayat', $selectedPanchayat)
+                  ->orWhereHas('membership', fn($mq) => $mq->where('grama_panchayat', $selectedPanchayat));
+            });
+        }
+
+        if (!empty($searchQuery)) {
+            $volunteersQuery->where(function($q) use ($searchQuery) {
+                $q->where('volunteer_id', 'LIKE', "%{$searchQuery}%")
+                  ->orWhere('cadre', 'LIKE', "%{$searchQuery}%")
+                  ->orWhere('designation', 'LIKE', "%{$searchQuery}%")
+                  ->orWhere('locality', 'LIKE', "%{$searchQuery}%")
+                  ->orWhere('district', 'LIKE', "%{$searchQuery}%")
+                  ->orWhere('mandal', 'LIKE', "%{$searchQuery}%")
+                  ->orWhereHas('membership', function($mq) use ($searchQuery) {
+                      $mq->where('full_name', 'LIKE', "%{$searchQuery}%")
+                         ->orWhere('district', 'LIKE', "%{$searchQuery}%")
+                         ->orWhere('mandal', 'LIKE', "%{$searchQuery}%")
+                         ->orWhere('grama_panchayat', 'LIKE', "%{$searchQuery}%");
+                  });
+            });
+        }
+
+        $volunteers = $volunteersQuery->orderBy('id', 'asc')->paginate(12)->withQueryString();
+        $totalApprovedCount = $approvedBase->count();
+
+        return view('team', compact(
+            'volunteers',
+            'cadres',
+            'countries',
+            'states',
+            'districts',
+            'assemblies',
+            'mandals',
+            'panchayats',
+            'selectedCadre',
+            'selectedCountry',
+            'selectedState',
+            'selectedDistrict',
+            'selectedAssembly',
+            'selectedMandal',
+            'selectedPanchayat',
+            'searchQuery',
+            'totalApprovedCount'
+        ));
     }
         // 5. Display Public Single Project Full Details Page
     public function showProject($id)

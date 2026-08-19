@@ -4,6 +4,19 @@
 <div class="bg-gray-50 min-h-screen py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-7xl mx-auto space-y-10">
 
+    @php
+        $certBanner = \App\Models\Banner::getBannerForPage('certificates');
+    @endphp
+
+    @if($certBanner && !empty($certBanner->desktop_banner))
+        <x-page-banner 
+            page="certificates" 
+            default-title="Tax & Legal Compliance Certificates" 
+            default-subtitle="Official registration documents, Income Tax Section 12A exemption, 80G tax rebate certificates, and Ministry of Corporate Affairs CSR-1 accreditations of ABVHPS."
+            badge="Official Statutory Disclosures"
+            min-height="280px"
+        />
+    @else
         <!-- Page Header -->
         <div class="text-center space-y-3">
             <span class="bg-orange-100 text-brandOrange text-xs font-black px-3.5 py-1 rounded-full uppercase tracking-widest border border-orange-200">
@@ -16,6 +29,7 @@
                 Official registration documents, Income Tax Section 12A exemption, 80G tax rebate certificates, and Ministry of Corporate Affairs CSR-1 accreditations of ABVHPS.
             </p>
         </div>
+    @endif
 
         <!-- Certificates Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

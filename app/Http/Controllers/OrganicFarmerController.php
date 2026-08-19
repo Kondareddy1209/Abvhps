@@ -83,20 +83,11 @@ class OrganicFarmerController extends Controller
             ]);
         }
 
-        // Dynamic Prefix Serial Number Generator Engine (E.g. ABVHPS-OF-001 Tracking Node)
-        $latestRecord = DB::table('organic_farmers')
-            ->orderBy('id', 'desc')
-            ->first();
-
-        if ($latestRecord) {
-            $stringParts = explode('-', $latestRecord->farmer_registration_id);
-            $lastSequence = (int) end($stringParts);
-            $nextSequence = $lastSequence + 1;
-        } else {
-            $nextSequence = 1; // Default fallback initialization
-        }
-
-        $farmerRegistrationId = 'ABVHPS-OF-' . str_pad($nextSequence, 3, '0', STR_PAD_LEFT);
+        // Generate official unique non-sequential Organic Farmers Group ID (e.g. OF-583214)
+        do {
+            $candidateNum = random_int(100000, 999999);
+            $farmerRegistrationId = 'OF-' . $candidateNum;
+        } while (DB::table('organic_farmers')->where('farmer_registration_id', $farmerRegistrationId)->exists());
 
         // Execute Transaction Block to ensure database absolute synchronization
         DB::beginTransaction();

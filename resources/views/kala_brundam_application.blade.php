@@ -123,7 +123,9 @@
             
             
             <div class="text-center space-y-2 border-b-2 border-dashed border-brandOrange/30 pb-4">
-                <div class="inline-block text-4xl p-2 bg-orange-50 rounded-full border border-brandOrange/20 shadow-inner">🔱</div>
+                <div class="w-16 h-16 rounded-full overflow-hidden bg-white border-2 border-brandOrange shadow-sm mx-auto flex items-center justify-center p-0.5">
+                    <img src="{{ asset('images/ABVHPS_LOGO.jpg') }}" class="w-full h-full object-cover rounded-full" alt="ABVHPS Logo">
+                </div>
                 <h2 class="text-xl md:text-3xl font-black tracking-widest text-brandGray">AKHANDA BHARATHA VISWA HINDU PARIRAKSHANA SAMITI</h2>
                 <span class="inline-block bg-brandOrange text-white text-[10px] font-black px-4 py-1 rounded tracking-widest uppercase shadow-sm">Official Cultural Affiliation Wing</span>
             </div>

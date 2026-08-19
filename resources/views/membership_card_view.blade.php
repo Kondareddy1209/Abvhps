@@ -84,8 +84,8 @@
         <!-- 5. Official Secure Online Verification QR Code Engine Component -->
         <div class="absolute top-[182px] left-[505px] w-[68px] h-[68px] bg-white border border-gray-200 p-1 z-10 flex items-center justify-center rounded shadow-sm overflow-hidden">
             @php
-                $cleanMemberTrackingId = isset($memberData['formatted_id']) ? str_replace(' ', '', $memberData['formatted_id']) : '000000000000';
-                $secureVerificationUrl = "https://abvhps.org" . $cleanMemberTrackingId;
+                $cleanMemberTrackingId = isset($memberData['formatted_id']) ? str_replace(' ', '', $memberData['formatted_id']) : ($memberData['membership_id'] ?? '000000000000');
+                $secureVerificationUrl = url('/verify/membership/' . $cleanMemberTrackingId);
             @endphp
             {!! QrCode::size(60)->margin(0)->generate($secureVerificationUrl) !!}
         </div>

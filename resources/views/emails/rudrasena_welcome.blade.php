@@ -109,7 +109,7 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <div style="font-size: 28px; margin-bottom: 4px;">🔱</div>
+            <img src="{{ asset('images/ABVHPS_LOGO.jpg') }}" width="56" height="56" style="border-radius: 50%; object-fit: cover; display: inline-block; margin-bottom: 6px; border: 2px solid #ffffff;" alt="ABVHPS Logo">
             <h1>AKHANDA BHARATHA VISWA HINDU PARIRAKSHANA SAMITI</h1>
             <p>ABVHPS Central Administrative Board &bull; Rudrasena Dal</p>
         </div>
@@ -126,7 +126,7 @@
 
             <!-- Credentials / Details Box -->
             <div class="credentials-box">
-                <h2>🔱 Your Verified Rudrasena Details</h2>
+                <h2>🛡️ Your Verified Rudrasena Details</h2>
                 <div class="credential-row">
                     <span class="credential-label">Rudrasena ID Code:</span>
                     <span class="credential-value" style="color: #ea580c; font-size: 15px;">{{ $memberData['rudrasena_id'] ?? 'N/A' }}</span>

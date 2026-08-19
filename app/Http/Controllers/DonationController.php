@@ -43,11 +43,12 @@ class DonationController extends Controller
         $siteName = 'ABVHPS CENTRAL BOARD';
         $address = 'Survey No:1035, Sasirekhapuram, Akkalareddy Palli, Porumamilla, Kadapa, A.P - 516193';
 
+        $logoAsset = asset('images/ABVHPS_LOGO.jpg');
         // Compile and output a lightweight secure official receipt layout vector matrix
         $htmlOutput = "
         <div style='max-width: 600px; margin: 20px auto; font-family: sans-serif; padding: 30px; border: 6px double #EA580C; border-radius: 8px; background-color: #FFF;'>
             <div style='text-align: center; border-bottom: 2px solid #EA580C; padding-bottom: 15px; margin-bottom: 20px;'>
-                <div style='font-size: 36px; margin-bottom: 5px;'>🔱</div>
+                <div style='margin-bottom: 8px;'><img src='{$logoAsset}' style='width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid #EA580C; display: inline-block;' alt='ABVHPS Logo'></div>
                 <h2 style='color: #EA580C; margin: 0; font-size: 18px; font-weight: 900; letter-spacing: 1px;'>AKHANDA BHARATA VISWA HINDU PARIRAKSHANA SAMITI</h2>
                 <p style='color: #6B7280; font-size: 10px; font-weight: 700; margin: 5px 0 0 0; text-transform: uppercase; letter-spacing: 0.5px;'>{$address}</p>
             </div>

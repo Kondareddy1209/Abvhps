@@ -35,7 +35,15 @@
                 <input type="text" name="exam_title" value="{{ old('exam_title', $exam->exam_title) }}" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs font-bold text-gray-800 focus:ring-2 focus:ring-brandOrange outline-none">
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block font-black text-gray-700 uppercase mb-1">Exam Type *</label>
+                    <select name="exam_type" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs font-bold text-gray-800 focus:ring-2 focus:ring-brandOrange outline-none">
+                        <option value="theory" {{ old('exam_type', $exam->exam_type) === 'theory' ? 'selected' : '' }}>Theory</option>
+                        <option value="mcq" {{ old('exam_type', $exam->exam_type) === 'mcq' ? 'selected' : '' }}>MCQ</option>
+                        <option value="both" {{ old('exam_type', $exam->exam_type) === 'both' ? 'selected' : '' }}>Both (Theory + MCQ)</option>
+                    </select>
+                </div>
                 <div>
                     <label class="block font-black text-gray-700 uppercase mb-1">Exam Date & Time *</label>
                     <input type="datetime-local" name="exam_date_time" value="{{ old('exam_date_time', $exam->exam_date_time ? \Carbon\Carbon::parse($exam->exam_date_time)->format('Y-m-d\TH:i') : '') }}" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs font-bold text-gray-800 focus:ring-2 focus:ring-brandOrange outline-none">

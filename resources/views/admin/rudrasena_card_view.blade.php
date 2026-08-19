@@ -41,7 +41,9 @@
                 <img src="{{ asset('storage/' . $cardData['photo_path']) }}" class="w-full h-full object-cover" alt="Rudrasena Member Photo">
             @else
                 <div class="w-full h-full bg-gray-200 flex flex-col items-center justify-center text-xs text-gray-400 font-bold">
-                    <span class="text-2xl mb-1">🔱</span>
+                    <div class="w-8 h-8 rounded-full overflow-hidden bg-white border border-gray-300 flex items-center justify-center p-0.5 mb-1">
+                        <img src="{{ asset('images/ABVHPS_LOGO.jpg') }}" class="w-full h-full object-cover rounded-full" alt="ABVHPS Logo">
+                    </div>
                     <span>No Photo</span>
                 </div>
             @endif
@@ -104,7 +106,8 @@
         <!-- 4. Dynamic Anti-Fraud QR Code Engine -->
         <div class="absolute bottom-[28px] left-[135px] w-[68px] h-[68px] bg-white border border-gray-200 p-1 z-10 flex items-center justify-center rounded shadow-sm overflow-hidden">
             @php
-                $secureVerificationUrl = "https://abvhps.org/verify-member/" . ($cardData['membership_id'] ?? '000000');
+                $rudraId = $cardData['rudrasena_id'] ?? 'RS0000';
+                $secureVerificationUrl = url('/verify/rudrasena/' . $rudraId);
             @endphp
             {!! QrCode::size(60)->margin(0)->generate($secureVerificationUrl) !!}
         </div>

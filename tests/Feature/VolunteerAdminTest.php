@@ -269,6 +269,7 @@ class VolunteerAdminTest extends TestCase
         $this->assertEquals('National Co-Ordinator', $volunteer->cadre);
         $this->assertEquals('Badvel', $volunteer->locality);
         $this->assertNotNull($volunteer->volunteer_id);
+        $this->assertMatchesRegularExpression('/^[0-9]{6}$/', $volunteer->volunteer_id);
         $this->assertNotNull($volunteer->password);
 
         $response->assertRedirect('/admin/volunteer/view-card/' . $volunteer->volunteer_id);

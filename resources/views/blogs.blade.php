@@ -1,13 +1,14 @@
 @extends('layouts.app')
 
 @section('content')
-<!-- Public Website Blogs Page Header Banner -->
-<div class="bg-gray-900 text-white py-12 text-center" style="background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('/assets/images/banner.jpg') no-repeat center center; background-size: cover;">
-    <div class="container mx-auto px-4">
-        <h1 class="text-3xl md:text-4xl font-bold uppercase tracking-wide text-orange-500">🔱 Religious Blogs & Articles</h1>
-        <p class="text-xs md:text-sm text-gray-300 mt-2 uppercase tracking-widest">Read sacred topics and official updates from our samiti</p>
-    </div>
-</div>
+<!-- Public Website Blogs Page Header Banner with Dynamic Admin Management -->
+<x-page-banner 
+    page="blogs" 
+    default-title="Religious Blogs & Articles" 
+    default-subtitle="Read sacred topics and official updates from our samiti"
+    badge="Sanatana Dharma Publications"
+    min-height="300px"
+/>
 
 <div class="py-12 bg-gray-50/50">
     <div class="container mx-auto px-4">

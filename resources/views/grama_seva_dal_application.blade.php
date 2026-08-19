@@ -2,42 +2,52 @@
 
 @section('content')
  <!-- Fixed Layer Flow Container mapping directly below the Master Menu Bar -->
-  <div class="relative max-w-4xl mx-auto py-10 px-4 z-10">
+  <div class="relative max-w-5xl mx-auto py-10 px-4 sm:px-6 lg:px-8 z-10">
     
     <!-- CENTRAL GRAMA SEVA DAL REGISTRATION DESK WORKSPACE CONTAINER -->
-    <div id="grama_seva_dal_form_panel" class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+    <div id="grama_seva_dal_form_panel" class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
         
         <!-- Header Badge -->
-        <div class="text-center bg-brandDarkGray text-white p-6 border-b-4 border-brandOrange">
-            <span class="text-4xl block mb-1 drop-shadow">🌱</span>
-            <h1 class="text-xl md:text-3xl font-black tracking-wider uppercase text-brandOrange">GRAMA SEVA DAL RECRUITMENT DESK</h1>
+        <div class="text-center bg-brandDarkGray text-white p-6 sm:p-8 border-b-4 border-brandOrange">
+            <span class="text-3xl sm:text-4xl block mb-1 drop-shadow">🌱</span>
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-black tracking-wider uppercase text-brandOrange">GRAMA SEVA DAL RECRUITMENT DESK</h1>
             <p class="text-gray-300 mt-1 font-medium text-xs md:text-sm tracking-wide">Akhanda Bharatha Viswa Hindu Parirakshana Samiti</p>
         </div>
 
-        <form id="grama_seva_dal_main_form" onsubmit="executeGramaSevaDalSubmission(event)" class="p-6 md:p-8 space-y-6">
+        <form id="grama_seva_dal_main_form" onsubmit="executeGramaSevaDalSubmission(event)" class="p-6 sm:p-8 md:p-10 space-y-8">
             @csrf
 
             <!-- SECTION 1: REGIONAL LOCATION DEMOGRAPHICS -->
-            <div class="border-b border-gray-200 pb-1">
-                <h3 class="text-sm font-black text-brandGray uppercase tracking-wide">Section 1: Regional Location Demographics</h3>
+            <div class="border-b border-gray-200 pb-2 mb-6">
+                <h3 class="text-base font-bold text-gray-900 uppercase tracking-wide">
+                    Section 1: Regional Location Demographics
+                </h3>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 mb-1 uppercase">State *</label>
-                    <input type="text" name="state" required class="w-full border border-gray-300 rounded px-3 py-1.5 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-brandOrange outline-none" placeholder="E.g. Andhra Pradesh">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 items-end">
+                <div class="flex flex-col justify-end">
+                    <label class="block text-[13px] font-semibold text-gray-700 mb-1.5 uppercase leading-snug min-h-[36px] flex items-end">
+                        <span>State <span class="text-orange-600">*</span></span>
+                    </label>
+                    <input type="text" name="state" required class="w-full h-12 border border-gray-300 rounded-lg px-3.5 text-sm font-medium text-gray-800 focus:border-brandOrange focus:ring-2 focus:ring-orange-100 outline-none transition bg-white" placeholder="E.g. Andhra Pradesh">
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 mb-1 uppercase">District *</label>
-                    <input type="text" name="district" required class="w-full border border-gray-300 rounded px-3 py-1.5 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-brandOrange outline-none" placeholder="E.g. YSR Kadapa">
+                <div class="flex flex-col justify-end">
+                    <label class="block text-[13px] font-semibold text-gray-700 mb-1.5 uppercase leading-snug min-h-[36px] flex items-end">
+                        <span>District <span class="text-orange-600">*</span></span>
+                    </label>
+                    <input type="text" name="district" required class="w-full h-12 border border-gray-300 rounded-lg px-3.5 text-sm font-medium text-gray-800 focus:border-brandOrange focus:ring-2 focus:ring-orange-100 outline-none transition bg-white" placeholder="E.g. YSR Kadapa">
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 mb-1 uppercase">Mandal *</label>
-                    <input type="text" name="mandal" required class="w-full border border-gray-300 rounded px-3 py-1.5 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-brandOrange outline-none" placeholder="E.g. Porumamilla">
+                <div class="flex flex-col justify-end">
+                    <label class="block text-[13px] font-semibold text-gray-700 mb-1.5 uppercase leading-snug min-h-[36px] flex items-end">
+                        <span>Mandal <span class="text-orange-600">*</span></span>
+                    </label>
+                    <input type="text" name="mandal" required class="w-full h-12 border border-gray-300 rounded-lg px-3.5 text-sm font-medium text-gray-800 focus:border-brandOrange focus:ring-2 focus:ring-orange-100 outline-none transition bg-white" placeholder="E.g. Porumamilla">
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 mb-1 uppercase">Village / Grama Panchayat *</label>
-                    <input type="text" name="village_or_gp" required class="w-full border border-brandOrange bg-orange-50/20 rounded px-3 py-1.5 text-sm font-black text-brandGray outline-none focus:ring-2 focus:ring-brandOrange" placeholder="Enter Village Name">
+                <div class="flex flex-col justify-end">
+                    <label class="block text-[13px] font-semibold text-gray-700 mb-1.5 uppercase leading-snug min-h-[36px] flex items-end">
+                        <span>Village / Grama Panchayat <span class="text-orange-600">*</span></span>
+                    </label>
+                    <input type="text" name="village_or_gp" required class="w-full h-12 border border-gray-300 rounded-lg px-3.5 text-sm font-medium text-gray-800 focus:border-brandOrange focus:ring-2 focus:ring-orange-100 outline-none transition bg-white" placeholder="Enter Village Name">
                 </div>
             </div>
 
@@ -154,7 +164,9 @@
             
             
             <div class="text-center space-y-2 border-b-2 border-dashed border-emerald-600/30 pb-4">
-                <div class="inline-block text-4xl p-2 bg-emerald-50 rounded-full border border-emerald-600/20 shadow-inner">🔱</div>
+                <div class="w-16 h-16 rounded-full overflow-hidden bg-white border-2 border-emerald-600/40 shadow-sm mx-auto flex items-center justify-center p-0.5">
+                    <img src="{{ asset('images/ABVHPS_LOGO.jpg') }}" class="w-full h-full object-cover rounded-full" alt="ABVHPS Logo">
+                </div>
                 <h2 class="text-xl md:text-3xl font-black tracking-widest text-brandGray">AKHANDA BHARATHA VISWA HINDU PARIRAKSHANA SAMITI</h2>
                 <span class="inline-block bg-emerald-600 text-white text-[10px] font-black px-4 py-1 rounded tracking-widest uppercase shadow-sm">Official Rural Reconstruction & Service Wing</span>
             </div>

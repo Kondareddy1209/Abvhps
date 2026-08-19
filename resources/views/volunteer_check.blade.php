@@ -6,7 +6,9 @@
         
         <!-- Header Block Layout -->
         <div class="text-center">
-            <span class="text-4xl text-brandOrange">🔱</span>
+            <div class="w-16 h-16 rounded-full overflow-hidden bg-white border-2 border-brandOrange shadow-sm mx-auto mb-2 flex items-center justify-center p-0.5 shrink-0">
+                <img src="{{ asset('images/ABVHPS_LOGO.jpg') }}" class="w-full h-full object-cover rounded-full" alt="ABVHPS Logo">
+            </div>
             <h2 class="mt-2 text-2xl font-extrabold text-brandGray">Volunteer Identity Check</h2>
             <p class="mt-2 text-xs text-gray-500">Akhanda Bharatha Viswa Hindu Parirakshana Samiti</p>
         </div>

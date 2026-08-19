@@ -9,7 +9,9 @@
             <span class="text-xs font-bold text-brandOrange uppercase tracking-wider block">Central Administrative Desk</span>
             <h2 class="text-xl font-black text-brandGray mt-0.5">Volunteer Approvals Control</h2>
         </div>
-        <span class="text-2xl">🔱</span>
+        <div class="w-10 h-10 rounded-full overflow-hidden bg-white border border-brandOrange flex items-center justify-center p-0.5 shrink-0 shadow-xs">
+            <img src="{{ asset('images/ABVHPS_LOGO.jpg') }}" class="w-full h-full object-cover rounded-full" alt="ABVHPS Logo">
+        </div>
     </div>
 
     <!-- Feedback Alerts Component Handling Server Status Logs -->

@@ -110,10 +110,19 @@ class VolunteerController extends Controller
             'doc_bank' => 'required|file|mimes:jpeg,png,jpg,pdf|max:2048'
         ]);
 
+        // Check if volunteer application already submitted for this membership
+        $existingVolunteer = DB::table('volunteers')->where('membership_id', $membershipId)->first();
+        if ($existingVolunteer) {
+            return redirect('/volunteer/success-notice')->with('info', 'Your volunteer application is already submitted and currently under review.');
+        }
+
         // File upload tracking logic saving physical attachments into public storage folders
         $declarationPath = $request->file('doc_declaration')->store('volunteer_docs/declarations', 'public');
         $voterPath = $request->file('doc_voter')->store('volunteer_docs/voters', 'public');
         $bankPath = $request->file('doc_bank')->store('volunteer_docs/banks', 'public');
+
+        // Fetch member location data to associate with volunteer profile
+        $member = DB::table('memberships')->where('membership_id', $membershipId)->first();
 
         // Inserting pristine form details into volunteers table with dynamic pending status configuration
         DB::table('volunteers')->insert([
@@ -134,6 +143,13 @@ class VolunteerController extends Controller
             'document_voter_path' => $voterPath,
             'document_bank_path' => $bankPath,
             'status' => 'pending', // Trailing pending state waiting strictly for central admin desk clearance
+            'is_active' => true,
+            'country' => $member->country ?? 'India',
+            'state' => $member->state ?? null,
+            'district' => $member->district ?? null,
+            'assembly_segment' => $member->assembly_segment ?? null,
+            'mandal' => $member->mandal ?? null,
+            'grama_panchayat' => $member->grama_panchayat ?? null,
             'created_at' => now(),
             'updated_at' => now()
         ]);
@@ -178,7 +194,69 @@ class VolunteerController extends Controller
 
         $volunteers = $query->orderBy('volunteers.created_at', 'desc')->paginate(15);
 
-        return view('admin.volunteer_admin_grid', compact('volunteers', 'searchQuery'));
+        $total = $volunteers->total();
+        $latestRecord = DB::table('volunteers')->orderByDesc('created_at')->first(['id', 'updated_at']);
+        $firstId = $volunteers->first()->id ?? 0;
+        $rowSignature = $volunteers->map(fn($v) => $v->id . ':' . $v->status . ':' . ($v->volunteer_id ?? ''))->join('|');
+        $initialSignature = md5($total . '_' . ($latestRecord->id ?? 0) . '_' . ($latestRecord->updated_at ?? '') . '_' . $firstId . '_' . $rowSignature);
+
+        return view('admin.volunteer_admin_grid', compact('volunteers', 'searchQuery', 'initialSignature'));
+    }
+
+    // 6b. Live Synchronization JSON Endpoint for Admin Volunteer Desk
+    public function liveSync(Request $request)
+    {
+        $searchQuery = $request->input('search');
+
+        $query = DB::table('volunteers')
+            ->leftJoin('memberships', 'volunteers.membership_id', '=', 'memberships.membership_id')
+            ->select(
+                'volunteers.*',
+                'memberships.full_name as member_full_name',
+                'memberships.photo_path as member_photo_path',
+                'memberships.aadhaar_number as member_aadhaar_number',
+                'memberships.blood_group as member_blood_group',
+                'memberships.district as member_district',
+                'memberships.mandal as member_mandal',
+                'memberships.grama_panchayat as member_grama_panchayat',
+                'memberships.state as member_state'
+            );
+
+        if (!empty($searchQuery)) {
+            $query->where(function ($q) use ($searchQuery) {
+                $q->where('memberships.full_name', 'LIKE', '%' . $searchQuery . '%')
+                  ->orWhere('volunteers.membership_id', 'LIKE', '%' . $searchQuery . '%')
+                  ->orWhere('volunteers.phone', 'LIKE', '%' . $searchQuery . '%')
+                  ->orWhere('volunteers.email', 'LIKE', '%' . $searchQuery . '%')
+                  ->orWhere('volunteers.volunteer_id', 'LIKE', '%' . $searchQuery . '%');
+            });
+        }
+
+        $volunteers = $query->orderBy('volunteers.created_at', 'desc')->paginate(15);
+
+        $total = $volunteers->total();
+        $totalAll = DB::table('volunteers')->count();
+        $pendingCount = DB::table('volunteers')->where('status', 'pending')->count();
+        $latestRecord = DB::table('volunteers')->orderByDesc('created_at')->first(['id', 'updated_at']);
+        $firstId = $volunteers->first()->id ?? 0;
+        $rowSignature = $volunteers->map(fn($v) => $v->id . ':' . $v->status . ':' . ($v->volunteer_id ?? ''))->join('|');
+        $datasetSignature = md5($total . '_' . ($latestRecord->id ?? 0) . '_' . ($latestRecord->updated_at ?? '') . '_' . $firstId . '_' . $rowSignature);
+
+        return response()->json([
+            'success' => true,
+            'signature' => $datasetSignature,
+            'total' => $total,
+            'total_all' => $totalAll,
+            'pending_count' => $pendingCount,
+            'current_page' => $volunteers->currentPage(),
+            'last_page' => $volunteers->lastPage(),
+            'has_pages' => $volunteers->hasPages(),
+            'html' => view('admin.partials.volunteer_table_rows', compact('volunteers'))->render(),
+            'pagination_html' => $volunteers->hasPages() ? $volunteers->appends(['search' => $searchQuery])->links()->render() : '',
+            'synced_at' => now()->format('h:i:s A')
+        ])->header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
+          ->header('Pragma', 'no-cache')
+          ->header('Expires', '0');
     }
 
     // 7. Full Volunteer Profile Edit Form (Screen 2)
@@ -328,47 +406,90 @@ class VolunteerController extends Controller
         }
 
         if ($mappedStatus === 'approved') {
-            $isFirstTimeApproval = empty($volunteer->volunteer_id);
-            $random6DigitId = $volunteer->volunteer_id;
+            $assignedVolunteerId = null;
+            $assignedLoginId = null;
+            $isFirstTimeApproval = empty($volunteer->volunteer_id) || empty($volunteer->volunteer_login_id);
+            $plainPassword = null;
+            $member = null;
 
-            if ($isFirstTimeApproval) {
-                do {
-                    $random6DigitId = (string) rand(100000, 999999);
-                    $duplicateCheck = DB::table('volunteers')->where('volunteer_id', $random6DigitId)->exists();
-                } while ($duplicateCheck);
+            DB::transaction(function () use ($id, $cadre, $locality, $volunteer, $isFirstTimeApproval, &$assignedVolunteerId, &$assignedLoginId, &$plainPassword, &$member) {
+                $member = DB::table('memberships')->where('membership_id', $volunteer->membership_id)->first();
 
-                $plainPassword = 'ABVHPS@' . rand(1000, 9999);
-                $encryptedPassword = bcrypt($plainPassword);
+                $syncLocation = [];
+                if ($member) {
+                    $syncLocation['country'] = $volunteer->country ?: ($member->country ?: 'India');
+                    $syncLocation['state'] = $volunteer->state ?: $member->state;
+                    $syncLocation['district'] = $volunteer->district ?: $member->district;
+                    $syncLocation['assembly_segment'] = $volunteer->assembly_segment ?: $member->assembly_segment;
+                    $syncLocation['mandal'] = $volunteer->mandal ?: $member->mandal;
+                    $syncLocation['grama_panchayat'] = $volunteer->grama_panchayat ?: $member->grama_panchayat;
+                }
 
-                DB::table('volunteers')->where('id', $id)->update([
-                    'status' => 'approved',
-                    'cadre' => $cadre,
-                    'locality' => $locality,
-                    'volunteer_id' => $random6DigitId,
-                    'password' => $encryptedPassword,
-                    'updated_at' => now()
-                ]);
+                if ($isFirstTimeApproval) {
+                    // Generate official unique 6-digit numeric Volunteer ID (e.g. 100001, 100002, ...)
+                    $assignedVolunteerId = $volunteer->volunteer_id;
+                    if (!$assignedVolunteerId || !preg_match('/^[0-9]{6}$/', trim($assignedVolunteerId))) {
+                        $assignedVolunteerId = self::generateNextVolunteerId();
+                    }
+                    $assignedLoginId = $assignedVolunteerId;
 
-                $formattedVolunteerId = implode(' ', str_split($random6DigitId, 2));
+                    $plainPassword = 'password';
+                    $encryptedPassword = \Illuminate\Support\Facades\Hash::make($plainPassword);
 
+                    DB::table('volunteers')->where('id', $id)->update(array_merge([
+                        'status' => 'approved',
+                        'is_active' => true,
+                        'cadre' => $cadre,
+                        'locality' => $locality,
+                        'designation' => $cadre,
+                        'volunteer_id' => $assignedVolunteerId,
+                        'volunteer_login_id' => $assignedLoginId,
+                        'password' => $encryptedPassword,
+                        'must_change_password' => true,
+                        'credentials_created_at' => now(),
+                        'welcome_email_sent_at' => now(),
+                        'updated_at' => now()
+                    ], $syncLocation));
+                } else {
+                    $assignedVolunteerId = $volunteer->volunteer_id;
+                    if (!$assignedVolunteerId || !preg_match('/^[0-9]{6}$/', trim($assignedVolunteerId))) {
+                        $assignedVolunteerId = self::generateNextVolunteerId();
+                    }
+                    $assignedLoginId = $volunteer->volunteer_login_id ?: $assignedVolunteerId;
+
+                    DB::table('volunteers')->where('id', $id)->update(array_merge([
+                        'status' => 'approved',
+                        'is_active' => true,
+                        'cadre' => $cadre,
+                        'locality' => $locality,
+                        'designation' => $cadre,
+                        'updated_at' => now()
+                    ], $syncLocation));
+                }
+            });
+
+            if ($isFirstTimeApproval && $assignedVolunteerId && $plainPassword) {
                 $mailOathMetrics = [
                     'recipient_email' => $volunteer->email,
                     'assigned_role' => $volunteer->role ?? 'village_president',
                     'assigned_designation' => $cadre,
                     'assigned_locality' => $locality,
-                    'formatted_volunteer_id' => $formattedVolunteerId,
+                    'formatted_volunteer_id' => $assignedVolunteerId,
+                    'clean_volunteer_id' => $assignedVolunteerId,
+                    'volunteer_login_id' => $assignedLoginId,
                     'generated_password' => $plainPassword,
                     'status' => 'credentials_oath_email_dispatched'
                 ];
                 session(['last_volunteer_email_log' => $mailOathMetrics]);
 
                 // Compile PDF ID Card & Dispatch Welcome Email to Volunteer
-                $member = DB::table('memberships')->where('membership_id', $volunteer->membership_id)->first();
-
                 $volunteerData = [
                     'full_name' => $member->full_name ?? 'Volunteer',
                     'membership_id' => $volunteer->membership_id,
-                    'formatted_volunteer_id' => $formattedVolunteerId,
+                    'volunteer_id' => $assignedVolunteerId,
+                    'volunteer_login_id' => $assignedLoginId,
+                    'formatted_volunteer_id' => $assignedVolunteerId,
+                    'clean_volunteer_id' => $assignedVolunteerId,
                     'email' => $volunteer->email,
                     'phone' => $volunteer->phone,
                     'plainPassword' => $plainPassword,
@@ -378,38 +499,184 @@ class VolunteerController extends Controller
                     'photo_path' => $member->photo_path ?? null,
                 ];
 
+                $pdfContent = null;
                 try {
                     $pdf = Pdf::loadView('pdf.volunteer_card_pdf', compact('volunteerData'));
                     $pdfContent = $pdf->output();
+                } catch (\Throwable $e) {
+                    Log::warning('Volunteer PDF generation fallback: ' . $e->getMessage());
+                }
 
+                $mailStatus = config('mail.default') === 'log' ? 'logged' : 'sent';
+                try {
                     Mail::to($volunteer->email)->send(new VolunteerWelcomeMail($volunteerData, $pdfContent));
                 } catch (\Throwable $e) {
-                    Log::error('Volunteer welcome email generation/dispatch error: ' . $e->getMessage());
+                    Log::error('Volunteer welcome email dispatch error: ' . $e->getMessage());
+                    $mailStatus = 'failed';
                 }
-            } else {
-                DB::table('volunteers')->where('id', $id)->update([
-                    'status' => 'approved',
-                    'cadre' => $cadre,
-                    'locality' => $locality,
-                    'updated_at' => now()
+
+                // Log notification
+                \App\Models\NotificationLog::create([
+                    'event_type' => 'volunteer_welcome',
+                    'notifiable_type' => \App\Models\Volunteer::class,
+                    'notifiable_id' => $id,
+                    'channel' => 'email',
+                    'recipient' => $volunteer->email,
+                    'status' => $mailStatus,
+                    'metadata' => [
+                        'volunteer_login_id' => $assignedLoginId,
+                        'official_id' => $assignedVolunteerId,
+                    ],
+                    'sent_at' => now(),
                 ]);
             }
 
-            return redirect('/admin/volunteer/view-card/' . $random6DigitId)
-                ->with('success', '🎉 Volunteer approval updated and ID card generated successfully!');
+            \App\Services\AuditLogger::log($isFirstTimeApproval ? 'VOLUNTEER_APPROVED' : 'VOLUNTEER_CADRE_UPDATED', 'Volunteer', (string)$assignedVolunteerId, [
+                'cadre' => $cadre,
+                'locality' => $locality,
+                'volunteer_id' => $assignedVolunteerId
+            ]);
+
+            return redirect('/admin/volunteer/view-card/' . $assignedVolunteerId)
+                ->with('success', 'Volunteer status verified & approved successfully with 6-digit login ID #' . $assignedLoginId . '!');
         }
 
-        // If Rejected or Pending status
+        // Processing Rejected or Pending states
         DB::table('volunteers')->where('id', $id)->update([
             'status' => $mappedStatus,
-            'cadre' => $cadre,
-            'locality' => $locality,
+            'is_active' => ($mappedStatus === 'approved'),
             'updated_at' => now()
+        ]);
+
+        \App\Services\AuditLogger::log($mappedStatus === 'rejected' ? 'VOLUNTEER_REJECTED' : 'VOLUNTEER_PENDING', 'Volunteer', (string)$volunteer->id, [
+            'status' => $mappedStatus
         ]);
 
         $statusText = $mappedStatus === 'rejected' ? 'rejected' : 'marked as pending';
         return redirect()->route('admin.volunteers.index')
             ->with('success', 'Volunteer #' . $volunteer->id . ' status has been ' . $statusText . ' successfully.');
+    }
+
+    /**
+     * Admin action: Resend or Reset Volunteer Credentials.
+     */
+     public function resendCredentials($id)
+     {
+         $volunteer = DB::table('volunteers')->where('id', $id)->first();
+         if (!$volunteer || $volunteer->status !== 'approved') {
+             return redirect()->back()->with('error', 'Only approved volunteers can receive login credentials.');
+         }
+
+         $member = DB::table('memberships')->where('membership_id', $volunteer->membership_id)->first();
+
+         // Ensure 6-digit official Volunteer ID exists
+         $officialId = $volunteer->volunteer_id;
+         if (!$officialId || !preg_match('/^[0-9]{6}$/', trim($officialId))) {
+             $officialId = self::generateNextVolunteerId();
+         }
+         $loginId = $officialId;
+
+          // Generate fresh default password
+          $plainPassword = 'password';
+          $encryptedPassword = \Illuminate\Support\Facades\Hash::make($plainPassword);
+
+         DB::table('volunteers')->where('id', $id)->update([
+             'volunteer_login_id' => $loginId,
+             'volunteer_id' => $officialId,
+             'password' => $encryptedPassword,
+             'must_change_password' => true,
+             'credentials_created_at' => now(),
+             'welcome_email_sent_at' => now(),
+             'updated_at' => now()
+         ]);
+
+         \App\Services\AuditLogger::log('VOLUNTEER_CREDENTIALS_RESET', 'Volunteer', (string)$officialId, [
+             'volunteer_id' => $officialId,
+             'email' => $volunteer->email
+         ]);
+
+         $volunteerData = [
+             'full_name' => $member->full_name ?? 'Volunteer',
+             'membership_id' => $volunteer->membership_id,
+             'volunteer_id' => $officialId,
+             'volunteer_login_id' => $loginId,
+             'formatted_volunteer_id' => $officialId,
+             'clean_volunteer_id' => $officialId,
+             'email' => $volunteer->email,
+             'phone' => $volunteer->phone,
+             'plainPassword' => $plainPassword,
+             'designation' => $volunteer->cadre ?? ($volunteer->designation ?? 'Volunteer'),
+             'locality' => $volunteer->locality ?? 'HQ',
+             'blood_group' => $member->blood_group ?? 'N/A',
+             'photo_path' => $member->photo_path ?? null,
+         ];
+
+         $pdfContent = null;
+         try {
+             $pdf = Pdf::loadView('pdf.volunteer_card_pdf', compact('volunteerData'));
+             $pdfContent = $pdf->output();
+         } catch (\Throwable $e) {
+             Log::warning('Volunteer PDF generation fallback: ' . $e->getMessage());
+         }
+
+         $mailStatus = config('mail.default') === 'log' ? 'logged' : 'sent';
+         try {
+             Mail::to($volunteer->email)->send(new VolunteerWelcomeMail($volunteerData, $pdfContent));
+         } catch (\Throwable $e) {
+             Log::error('Volunteer resend email error: ' . $e->getMessage());
+             $mailStatus = 'failed';
+         }
+
+         \App\Models\NotificationLog::create([
+             'event_type' => 'volunteer_welcome_resend',
+             'notifiable_type' => \App\Models\Volunteer::class,
+             'notifiable_id' => $volunteer->id,
+             'channel' => 'email',
+             'recipient' => $volunteer->email,
+             'status' => $mailStatus,
+             'metadata' => [
+                 'volunteer_id' => $officialId,
+                 'volunteer_login_id' => $loginId,
+             ],
+             'sent_at' => now(),
+         ]);
+
+         $statusMsg = $mailStatus === 'logged' ? ' (Written to storage/logs/laravel.log)' : '';
+         return redirect()->back()->with('success', "Login credentials for Volunteer #{$officialId} reset and welcome email {$mailStatus}{$statusMsg}.");
+     }
+
+    /**
+     * Generate the next official unique 6-digit numeric Volunteer ID (e.g. 100001, 100002, ...).
+     * Generate a unique, non-sequential randomized 6-digit numeric Volunteer ID (e.g. 583214, 741905, 216438).
+     * Strictly satisfies ^[0-9]{6}$ and checks against all existing volunteer_id and volunteer_login_id records.
+     */
+    public static function generateNextVolunteerId(): string
+    {
+        $maxAttempts = 50;
+        $attempt = 0;
+
+        do {
+            $candidateNumber = random_int(100000, 999999);
+            $formatted = (string) $candidateNumber;
+            $attempt++;
+
+            $exists = DB::table('volunteers')
+                ->where('volunteer_id', $formatted)
+                ->orWhere('volunteer_login_id', $formatted)
+                ->exists();
+
+            if (!$exists) {
+                return $formatted;
+            }
+        } while ($attempt < $maxAttempts);
+
+        // Deterministic fallback if collision space is crowded
+        throw new \RuntimeException("Unable to allocate a unique 6-digit numeric Volunteer ID after {$maxAttempts} attempts.");
+    }
+
+    public static function generateNextVolunteerLoginId(): string
+    {
+        return self::generateNextVolunteerId();
     }
 
     // 11. View Read-Only Volunteer Profile Dossier
@@ -491,7 +758,7 @@ class VolunteerController extends Controller
     // 8. Render Vertical Volunteer ID Card Screen showing mapped metrics
     public function viewVolunteerCard($volunteerIdCode)
     {
-        // Fetching the volunteer record using the 6-digit clean identifier from incoming route tracking
+        // Fetching the volunteer record using the official Volunteer ID (e.g. RS0001)
         $volunteer = DB::table('volunteers')->where('volunteer_id', $volunteerIdCode)->where('status', 'approved')->first();
 
         if (!$volunteer) {
@@ -501,20 +768,19 @@ class VolunteerController extends Controller
         // Fetching profile fields from matching membership parent row sequence
         $member = DB::table('memberships')->where('membership_id', $volunteer->membership_id)->first();
 
-        // 6-digit space formatting rules splitting code into 2-2-2 format structure (e.g., 66 24 24)
-        $formattedVolunteerId = implode(' ', str_split($volunteer->volunteer_id, 2));
-
         // Building complete geography string details for the address wrap layer section
         $completeAddress = ($member->grama_panchayat ?? 'Grama') . ', ' . ($member->mandal ?? 'Mandal') . ', ' . ($member->assembly_segment ?? 'Badvel') . ', ' . ($member->district ?? 'District') . ', ' . ($member->state ?? 'State') . ', ' . ($member->country ?? 'India') . ' - ' . ($member->pincode ?? 'Pincode');
 
         $volunteerData = [
             'full_name' => $member->full_name ?? 'Volunteer',
+            'volunteer_id' => $volunteer->volunteer_id,
             'clean_volunteer_id' => $volunteer->volunteer_id,
-            'formatted_volunteer_id' => $formattedVolunteerId,
-            'designation' => $volunteer->designation,
-            'locality' => $volunteer->locality,
+            'formatted_volunteer_id' => $volunteer->volunteer_id,
+            'designation' => $volunteer->designation ?? ($volunteer->cadre ?? 'Volunteer'),
+            'locality' => $volunteer->locality ?? 'HQ',
             'blood_group' => $member->blood_group ?? 'N/A',
             'phone' => $volunteer->phone,
+            'membership_id' => $volunteer->membership_id,
             'complete_address' => $completeAddress,
             'photo_path' => $member->photo_path ?? null
         ];
@@ -527,11 +793,11 @@ class VolunteerController extends Controller
         return view('volunteer_login');
     }
         
-           // 10. Process Secure Credentials Supporting Entire 5-Tier Strategic Pipeline Bypass Slots Safely
+    // 10. Process Secure Credentials Supporting Entire 5-Tier Strategic Pipeline Bypass Slots Safely
     public function processLogin(Request $request)
     {
         $request->validate([
-            'volunteer_id' => 'required|digits:6',
+            'volunteer_id' => 'required|string',
             'password' => 'required|string'
         ]);
 
@@ -879,7 +1145,6 @@ return view('volunteer_village_dashboard', compact('searchedMember', 'totalMembe
         $globalMembersCount = DB::table('memberships')->where('payment_status', 'success')->count();
         $globalBenefitsCount = DB::table('seva_orders_history')->count();
         $totalActiveVolunteersCount = DB::table('volunteers')->count();
-        if($totalActiveVolunteersCount == 0) { $totalActiveVolunteersCount = 1450; }
 
         // 2. DYNAMIC PIPELINE BREAKDOWN ANALYTICS MATRIX
         $breakdownData = collect();

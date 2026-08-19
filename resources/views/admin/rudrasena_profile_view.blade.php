@@ -133,7 +133,9 @@
                             <img src="{{ asset('storage/' . $member->member_photo_path) }}" class="w-32 h-36 object-cover rounded-xl border-4 border-brandOrange shadow-md" alt="Member Photo">
                         @else
                             <div class="w-32 h-36 bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400">
-                                <span class="text-3xl mb-1">🔱</span>
+                                <div class="w-10 h-10 rounded-full overflow-hidden bg-white border border-gray-300 flex items-center justify-center p-0.5 mb-1">
+                                    <img src="{{ asset('images/ABVHPS_LOGO.jpg') }}" class="w-full h-full object-cover rounded-full" alt="ABVHPS Logo">
+                                </div>
                                 <span class="text-[10px] font-bold uppercase">Rudrasena</span>
                             </div>
                         @endif

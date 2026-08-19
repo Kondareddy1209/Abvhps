@@ -47,7 +47,7 @@
                         <div class="p-3 h-full flex flex-col justify-between relative z-10">
                             <!-- Header branding -->
                             <div class="text-center border-b border-orange-500/20 pb-1 flex items-center justify-center gap-1.5">
-                                <span class="text-xl">🔱</span>
+                                <img src="{{ asset('images/ABVHPS_LOGO.jpg') }}" class="w-6 h-6 rounded-full object-cover border border-orange-500 shrink-0" alt="ABVHPS Logo">
                                 <div class="text-left">
                                     <h2 class="text-[8px] font-black tracking-tighter text-gray-800 leading-none">AKHANDA BHARATHA VISWA HINDU</h2>
                                     <h2 class="text-[8px] font-black tracking-tighter text-gray-800 leading-none mt-0.5">PARIRAKSHANA SAMITI</h2>
@@ -77,7 +77,7 @@
                             </div>
                         </div>
                         <!-- Watermark background texture vector -->
-                        <div class="absolute inset-0 flex items-center justify-center text-gray-100/30 text-7xl font-black select-none pointer-events-none z-0">🔱</div>
+                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0"><img src="{{ asset('images/ABVHPS_LOGO.jpg') }}" class="w-24 h-24 object-cover rounded-full opacity-10" alt=""></div>
                     </div>
 
                     <!-- B. THE IDENTITY BACK BADGE DECK LAYER -->
@@ -110,7 +110,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="absolute inset-0 flex items-center justify-center text-gray-50/40 text-7xl font-black select-none pointer-events-none z-0">🔱</div>
+                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0"><img src="{{ asset('images/ABVHPS_LOGO.jpg') }}" class="w-24 h-24 object-cover rounded-full opacity-10" alt=""></div>
                     </div>
 
                 </div>

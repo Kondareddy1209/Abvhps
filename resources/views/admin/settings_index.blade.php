@@ -83,6 +83,9 @@
             <a href="{{ route('admin.settings.index') }}" class="flex items-center gap-2 px-3 py-2 bg-brandOrange text-white rounded-lg shadow-sm transition">
                 <span>⚙️</span> 15. SITE GLOBAL SETTINGS
             </a>
+            <a href="{{ route('admin.banner.index') }}" class="flex items-center gap-2 px-3 py-2 hover:bg-gray-800 hover:text-white rounded-lg transition">
+                <span>🚩</span> 16. BANNER MANAGEMENT
+            </a>
         </nav>
         
         <div class="p-3 bg-gray-900 border-t border-gray-800 text-center text-[8px] font-bold text-gray-500 tracking-wider">

@@ -42,6 +42,10 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+        'volunteer' => [
+            'driver' => 'session',
+            'provider' => 'volunteers',
+        ],
     ],
 
     /*
@@ -66,11 +70,10 @@ return [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', User::class),
         ],
-
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
+        'volunteers' => [
+            'driver' => 'eloquent',
+            'model' => \App\Models\Volunteer::class,
+        ],
     ],
 
     /*

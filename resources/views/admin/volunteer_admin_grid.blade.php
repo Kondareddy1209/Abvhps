@@ -105,8 +105,12 @@
                     <p class="text-xs text-gray-400 font-semibold mt-0.5">Home - Volunteer</p>
                 </div>
                 <div class="flex items-center gap-2">
+                    <span id="volunteer_sync_indicator" class="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2.5 py-1 rounded-full border border-emerald-200 shadow-sm">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span id="volunteer_sync_text">Live Sync</span>
+                    </span>
                     <span class="bg-gray-200 text-gray-700 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
-                        Total Records: {{ $volunteers->total() }}
+                        Total Records: <span id="volunteer_total_count">{{ $volunteers->total() }}</span>
                     </span>
                 </div>
             </div>
@@ -157,105 +161,123 @@
                                 <th class="px-3 py-3.5">DELETE</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-200 bg-white text-center">
-                            @forelse($volunteers as $index => $volunteer)
-                                <tr class="hover:bg-gray-50/70 transition-colors">
-                                    
-                                    <!-- 1. S.NO -->
-                                    <td class="px-4 py-4 text-gray-500 font-mono">
-                                        {{ $loop->iteration + ($volunteers->currentPage() - 1) * $volunteers->perPage() }}
-                                    </td>
-
-                                    <!-- 2. NAME -->
-                                    <td class="px-6 py-4 text-left">
-                                        <div class="font-black text-gray-900 uppercase text-xs">
-                                            {{ $volunteer->member_full_name ?? 'Volunteer' }}
-                                        </div>
-                                        <div class="text-[10px] text-gray-400 font-mono mt-0.5">
-                                            @if($volunteer->volunteer_id)
-                                                <span class="text-brandOrange font-bold">VOLUNTEER ID: {{ implode(' ', str_split($volunteer->volunteer_id, 2)) }}</span> | 
-                                            @endif
-                                            <span>MEMBER: {{ implode(' ', str_split($volunteer->membership_id, 4)) }}</span>
-                                        </div>
-                                    </td>
-
-                                    <!-- 3. CONTACT -->
-                                    <td class="px-6 py-4 text-left">
-                                        <div class="font-mono text-gray-900 font-bold text-xs">
-                                            {{ $volunteer->phone }}
-                                        </div>
-                                        <div class="text-[10px] text-gray-500 font-mono">
-                                            {{ $volunteer->email }}
-                                        </div>
-                                    </td>
-
-                                    <!-- 4. VIEW -->
-                                    <td class="px-2 py-4">
-                                        <a href="{{ route('admin.volunteers.view', $volunteer->id) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white font-black text-[9px] px-3 py-1.5 rounded shadow-sm uppercase transition inline-block text-center">
-                                            View
-                                        </a>
-                                    </td>
-
-                                    <!-- 5. EDIT -->
-                                    <td class="px-2 py-4">
-                                        <a href="{{ route('admin.volunteers.edit', $volunteer->id) }}" class="bg-orange-500 hover:bg-orange-600 text-white font-black text-[9px] px-3 py-1.5 rounded shadow-sm uppercase transition inline-block text-center">
-                                            Edit
-                                        </a>
-                                    </td>
-
-                                    <!-- 6. CADDER -->
-                                    <td class="px-2 py-4">
-                                        <a href="{{ route('admin.volunteers.cadreEdit', $volunteer->id) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white font-black text-[9px] px-3 py-1.5 rounded shadow-sm uppercase transition inline-block text-center">
-                                            Update
-                                        </a>
-                                    </td>
-
-                                    <!-- 7. ID -->
-                                    <td class="px-2 py-4">
-                                        @if($volunteer->status === 'approved' && !empty($volunteer->volunteer_id))
-                                            <a href="{{ route('admin.volunteer.view_card', $volunteer->volunteer_id) }}" target="_blank" class="bg-yellow-500 hover:bg-yellow-600 text-white font-black text-[9px] px-3 py-1.5 rounded shadow-sm uppercase transition inline-block text-center">
-                                                Id
-                                            </a>
-                                        @else
-                                            <button disabled class="bg-gray-300 text-gray-500 font-black text-[9px] px-3 py-1.5 rounded uppercase cursor-not-allowed inline-block text-center" title="ID Card generated after approval">
-                                                Id
-                                            </button>
-                                        @endif
-                                    </td>
-
-                                    <!-- 8. DELETE -->
-                                    <td class="px-2 py-4">
-                                        <form action="{{ route('admin.volunteers.delete', $volunteer->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this volunteer record permanently?');" class="inline-block">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="bg-rose-500 hover:bg-rose-600 text-white font-black text-[9px] px-3 py-1.5 rounded shadow-sm uppercase transition">
-                                                Delete
-                                            </button>
-                                        </form>
-                                    </td>
-
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="8" class="px-6 py-12 text-center font-bold text-gray-400 uppercase tracking-wider">
-                                        <span class="text-2xl block mb-1">🤝</span>
-                                        No volunteer records found in the roster.
-                                    </td>
-                                </tr>
-                            @endforelse
+                        <tbody id="volunteer_table_body" class="divide-y divide-gray-200 bg-white text-center">
+                            @include('admin.partials.volunteer_table_rows')
                         </tbody>
                     </table>
                 </div>
             </div>
 
             <!-- Pagination Grid Node -->
-            @if($volunteers->hasPages())
-                <div class="p-4 bg-white rounded-xl border border-gray-200 flex justify-center shadow-sm">
+            <div id="volunteer_pagination_container" class="{{ $volunteers->hasPages() ? '' : 'hidden' }} p-4 bg-white rounded-xl border border-gray-200 flex justify-center shadow-sm">
+                @if($volunteers->hasPages())
                     {{ $volunteers->appends(['search' => $searchQuery])->links() }}
-                </div>
-            @endif
+                @endif
+            </div>
 
         </main>
     </div>
 </div>
+
+<!-- Dynamic Live Synchronization Engine -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tableBody = document.getElementById('volunteer_table_body');
+    const totalCountEl = document.getElementById('volunteer_total_count');
+    const syncIndicator = document.getElementById('volunteer_sync_indicator');
+    const syncText = document.getElementById('volunteer_sync_text');
+    const paginationContainer = document.getElementById('volunteer_pagination_container');
+
+    if (!tableBody) return;
+
+    let currentSignature = "{{ $initialSignature ?? '' }}";
+    let isFetching = false;
+    const pollInterval = 6000; // 6 seconds
+    let timer = null;
+    let consecutiveFailures = 0;
+
+    function getQueryParams() {
+        const params = new URLSearchParams(window.location.search);
+        return params.toString();
+    }
+
+    async function checkLiveUpdates() {
+        if (isFetching || document.hidden) return;
+
+        isFetching = true;
+        const query = getQueryParams();
+        const url = `{{ route('admin.volunteers.live') }}${query ? '?' + query : ''}`;
+
+        try {
+            const response = await fetch(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (response.status === 401 || response.status === 419) {
+                if (syncIndicator && syncText) {
+                    syncIndicator.className = 'flex items-center gap-1.5 bg-amber-50 text-amber-700 text-[10px] font-bold px-2.5 py-1 rounded-full border border-amber-200 shadow-sm';
+                    syncText.textContent = 'Session Expired';
+                }
+                if (timer) clearInterval(timer);
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            const data = await response.json();
+            consecutiveFailures = 0;
+
+            if (data && data.success) {
+                if (totalCountEl && data.total !== undefined) {
+                    totalCountEl.textContent = data.total;
+                }
+
+                // If dataset signature changed, update rows and pagination smoothly
+                if (data.signature && data.signature !== currentSignature) {
+                    currentSignature = data.signature;
+                    tableBody.innerHTML = data.html;
+
+                    if (paginationContainer) {
+                        if (data.has_pages && data.pagination_html) {
+                            paginationContainer.innerHTML = data.pagination_html;
+                            paginationContainer.classList.remove('hidden');
+                        } else {
+                            paginationContainer.innerHTML = '';
+                            paginationContainer.classList.add('hidden');
+                        }
+                    }
+                }
+
+                if (syncIndicator && syncText) {
+                    syncIndicator.className = 'flex items-center gap-1.5 bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2.5 py-1 rounded-full border border-emerald-200 shadow-sm';
+                    syncText.textContent = `Live (${data.synced_at})`;
+                }
+            }
+        } catch (error) {
+            consecutiveFailures++;
+            if (syncIndicator && syncText) {
+                if (consecutiveFailures > 2) {
+                    syncIndicator.className = 'flex items-center gap-1.5 bg-rose-50 text-rose-700 text-[10px] font-bold px-2.5 py-1 rounded-full border border-rose-200 shadow-sm';
+                    syncText.textContent = 'Sync Retrying...';
+                }
+            }
+        } finally {
+            isFetching = false;
+        }
+    }
+
+    timer = setInterval(checkLiveUpdates, pollInterval);
+
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+            checkLiveUpdates();
+        }
+    });
+});
+</script>
 @endsection

@@ -76,21 +76,11 @@ class GramaSevaDalController extends Controller
             'members' => 'required|array|min:1' // Validating team must contain at least 1 verified youth asset
         ]);
 
-        // Dynamic Prefix Serial Number Generator Engine (E.g. ABVHPS-GSD-001 Tracking Node)
-        $latestRecord = DB::table('grama_seva_dals')
-            ->orderBy('id', 'desc')
-            ->first();
-
-        if ($latestRecord) {
-            // Extract numerical increment configuration safely from the string token
-            $stringParts = explode('-', $latestRecord->gong_registration_id);
-            $lastSequence = (int) end($stringParts);
-            $nextSequence = $lastSequence + 1;
-        } else {
-            $nextSequence = 1; // Default fallback initialization
-        }
-
-        $gongRegistrationId = 'ABVHPS-GSD-' . str_pad($nextSequence, 3, '0', STR_PAD_LEFT);
+        // Generate official unique non-sequential Grama Seva Dal Group ID (e.g. GSD-583214)
+        do {
+            $candidateNum = random_int(100000, 999999);
+            $gongRegistrationId = 'GSD-' . $candidateNum;
+        } while (DB::table('grama_seva_dals')->where('gong_registration_id', $gongRegistrationId)->exists());
 
         // Execute Transaction Block to ensure database absolute synchronization
         DB::beginTransaction();

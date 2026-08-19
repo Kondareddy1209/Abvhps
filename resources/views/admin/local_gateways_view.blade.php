@@ -43,23 +43,43 @@
             </div>
         </div>
 
-        <!-- Group Info Card -->
-        <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-            <div>
-                <span class="text-gray-400 font-bold uppercase block text-[10px]">Registration ID</span>
-                <span class="font-mono font-bold text-brandOrange">{{ $group->team_registration_id ?? ($group->gong_registration_id ?? ($group->farmer_registration_id ?? 'GRP-'.$group->id)) }}</span>
+        <!-- Group Info Card & QR Code -->
+        @php
+            $regId = $group->team_registration_id ?? ($group->gong_registration_id ?? ($group->farmer_registration_id ?? 'GRP-'.$group->id));
+            if ($wing === 'organic_farmers') {
+                $verifyUrl = url('/verify/organic-farmers/' . $regId);
+            } elseif ($wing === 'kala_brundam') {
+                $verifyUrl = url('/verify/kala-brundham/' . $regId);
+            } else {
+                $verifyUrl = url('/verify/grama-seva-dal/' . $regId);
+            }
+        @endphp
+        <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 text-xs">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 flex-1">
+                <div>
+                    <span class="text-gray-400 font-bold uppercase block text-[10px]">Group ID</span>
+                    <span class="font-mono font-bold text-brandOrange text-sm">{{ $regId }}</span>
+                </div>
+                <div>
+                    <span class="text-gray-400 font-bold uppercase block text-[10px]">Leader / Team Name</span>
+                    <span class="font-bold text-gray-900 uppercase">{{ $group->team_name ?? ($group->leader_name ?? ($group->farmer_name ?? 'N/A')) }}</span>
+                </div>
+                <div>
+                    <span class="text-gray-400 font-bold uppercase block text-[10px]">Location</span>
+                    <span class="font-bold text-gray-800">{{ $group->location ?? ($group->village_or_gp ?? ($group->village ?? 'N/A')) }}</span>
+                </div>
+                <div>
+                    <span class="text-gray-400 font-bold uppercase block text-[10px]">Total Group Strength</span>
+                    <span class="font-mono font-black text-emerald-700 text-sm">{{ $members->count() > 0 ? $members->count() : 1 }} Registered Members</span>
+                </div>
             </div>
-            <div>
-                <span class="text-gray-400 font-bold uppercase block text-[10px]">Leader / Team Name</span>
-                <span class="font-bold text-gray-900 uppercase">{{ $group->team_name ?? ($group->leader_name ?? ($group->farmer_name ?? 'N/A')) }}</span>
-            </div>
-            <div>
-                <span class="text-gray-400 font-bold uppercase block text-[10px]">Location</span>
-                <span class="font-bold text-gray-800">{{ $group->location ?? ($group->village_or_gp ?? ($group->village ?? 'N/A')) }}</span>
-            </div>
-            <div>
-                <span class="text-gray-400 font-bold uppercase block text-[10px]">Total Group Strength</span>
-                <span class="font-mono font-black text-emerald-700 text-sm">{{ $members->count() > 0 ? $members->count() : 1 }} Registered Members</span>
+
+            <!-- Dynamic Group Verification QR Code -->
+            <div class="flex flex-col items-center p-3 bg-gray-50 border border-gray-200 rounded-xl shrink-0">
+                <div class="bg-white p-1.5 border border-gray-300 rounded shadow-xs">
+                    {!! QrCode::size(70)->margin(0)->generate($verifyUrl) !!}
+                </div>
+                <span class="text-[9px] font-bold text-gray-500 uppercase tracking-wider mt-1">Official Group QR</span>
             </div>
         </div>
 

@@ -166,7 +166,7 @@
                         placeholder="Enter 6 Digit PIN Code">
                 </div>
                 <div>
-                    <button type="button" onclick="fetchIndianPostalData()"
+                    <button type="button" id="btn_fetch_pincode" onclick="fetchIndianPostalData()"
                         class="w-full py-2 px-4 border border-transparent text-sm font-bold rounded-md text-white bg-brandOrange hover:bg-opacity-90 transition shadow-sm">
                         Fetch Details
                     </button>
@@ -285,6 +285,7 @@
     // Fixed Pin Code Engine with accurate array reading and local dummy data backup
     function fetchIndianPostalData() {
         const pincodeInput = document.getElementById('pincode').value;
+        const btn = document.getElementById('btn_fetch_pincode') || document.querySelector('button[onclick="fetchIndianPostalData()"]');
 
         if (pincodeInput.length !== 6) {
             alert("Please enter a valid 6-digit PIN Code first.");
@@ -301,13 +302,23 @@
             return;
         }
 
-        const url = 'https://postalpincode.in' + pincodeInput;
+        if (btn) {
+            btn.disabled = true;
+            btn.innerText = "Fetching...";
+        }
+
+        const url = 'https://api.postalpincode.in/pincode/' + pincodeInput;
         
         fetch(url)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Network response was not ok");
+                }
+                return response.json();
+            })
             .then(data => {
                 // Reading the exact array block structure data[0] from Indian Postal Service Response
-                if (data && data[0] && data[0].Status === "Success" && data[0].PostOffice) {
+                if (data && data[0] && data[0].Status === "Success" && data[0].PostOffice && data[0].PostOffice.length > 0) {
                     const postOfficeList = data[0].PostOffice;
                     const firstOffice = postOfficeList[0]; // Capturing the very first zone matching row
                     
@@ -321,7 +332,14 @@
                 }
             })
             .catch(error => {
-                console.log("Local browser proxy block. Manual input enabled.");
+                console.error("Postal API error:", error);
+                alert("Failed to fetch PIN Code details. Please check your network or enter details manually.");
+            })
+            .finally(() => {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = "Fetch Details";
+                }
             });
     }
 

@@ -30,8 +30,13 @@ class VolunteerWelcomeMail extends Mailable
      */
     public function envelope(): Envelope
     {
+        $id = $this->volunteerData['volunteer_id'] ?? ($this->volunteerData['formatted_volunteer_id'] ?? '');
+        $subject = !empty($id)
+            ? "🎉 ABVHPS Volunteer Approved - Your Volunteer ID: {$id}"
+            : "🎉 Welcome to ABVHPS Volunteer Wing - Your ID Card & Credentials";
+
         return new Envelope(
-            subject: '🎉 Welcome to ABVHPS Volunteer Wing - Your ID Card & Credentials',
+            subject: $subject,
         );
     }
 

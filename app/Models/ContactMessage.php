@@ -16,5 +16,18 @@ class ContactMessage extends Model
         'message',
         'ip_address',
         'status',
+        'source',
+        'source_url',
+        'user_agent',
+        'admin_notes',
+        'read_at',
+        'replied_at',
+    ];
+
+    protected $casts = [
+        'read_at'    => 'datetime',
+        'replied_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 }

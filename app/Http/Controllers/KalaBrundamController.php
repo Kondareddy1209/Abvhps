@@ -70,21 +70,11 @@ class KalaBrundamController extends Controller
             'members' => 'required|array|min:1' // Validating team must contain at least 1 verified member
         ]);
 
-        // Dynamic Prefix Serial Number Generator Engine (E.g. ABVHPS-KB-001 Tracking Node)
-        $latestRecord = DB::table('kala_brundams')
-            ->orderBy('id', 'desc')
-            ->first();
-
-        if ($latestRecord) {
-            // Extract numerical increment configuration safely from the string token
-            $stringParts = explode('-', $latestRecord->team_registration_id);
-            $lastSequence = (int) end($stringParts);
-            $nextSequence = $lastSequence + 1;
-        } else {
-            $nextSequence = 1; // Default fallback initialization
-        }
-
-        $teamRegistrationId = 'ABVHPS-KB-' . str_pad($nextSequence, 3, '0', STR_PAD_LEFT);
+        // Generate official unique non-sequential Kala Brundam Group ID (e.g. KB-583214)
+        do {
+            $candidateNum = random_int(100000, 999999);
+            $teamRegistrationId = 'KB-' . $candidateNum;
+        } while (DB::table('kala_brundams')->where('team_registration_id', $teamRegistrationId)->exists());
 
         // Execute Transaction Block to ensure database absolute synchronization
         DB::beginTransaction();

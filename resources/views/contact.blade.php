@@ -4,6 +4,19 @@
 <div class="bg-gray-50 min-h-screen py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-7xl mx-auto space-y-12">
 
+    @php
+        $contactBanner = \App\Models\Banner::getBannerForPage('contact');
+    @endphp
+
+    @if($contactBanner && !empty($contactBanner->desktop_banner))
+        <x-page-banner 
+            page="contact" 
+            default-title="Get In Touch With ABVHPS" 
+            default-subtitle="Have questions regarding Sanathana Dharma Seva, membership, volunteer enrollment, or general inquiries? Our central coordination desk is here to assist."
+            badge="Direct Communication Portal"
+            min-height="280px"
+        />
+    @else
         <!-- Page Header -->
         <div class="text-center space-y-3">
             <span class="bg-orange-100 text-brandOrange text-xs font-black px-3.5 py-1 rounded-full uppercase tracking-widest border border-orange-200">
@@ -16,6 +29,7 @@
                 Have questions regarding Sanathana Dharma Seva, membership, volunteer enrollment, or general inquiries? Our central coordination desk is here to assist.
             </p>
         </div>
+    @endif
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             <!-- Left Info Panel (5 Columns) -->

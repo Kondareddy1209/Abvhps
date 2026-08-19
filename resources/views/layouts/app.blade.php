@@ -119,7 +119,7 @@
 
     <!-- 4. Footer Component -->
     <footer class="bg-brandDarkGray text-gray-300 pt-10 pb-4 px-4 mt-12">
-        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 border-b border-gray-700 pb-8">
+        <div class="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6 border-b border-gray-700 pb-8">
             <div>
                 <h3 class="text-white font-bold text-lg mb-4 text-brandOrange">About ABVHPS</h3>
                 <p class="text-sm leading-relaxed">
@@ -128,13 +128,22 @@
             </div>
             <div>
                 <h3 class="text-white font-bold text-lg mb-4 text-brandOrange">Quick Links</h3>
-                <div class="grid grid-cols-2 gap-2 text-sm">
+                <div class="grid grid-cols-1 gap-1.5 text-sm">
                     <a href="/about" class="hover:text-white">About Us</a>
                     <a href="/membership" class="hover:text-white">Membership</a>
                     <a href="/volunteer" class="hover:text-white">Volunteer</a>
                     <a href="/donation" class="hover:text-white">Donation</a>
                     <a href="{{ route('public.contact') }}" class="hover:text-white">Contact Us</a>
                     <a href="{{ route('public.certificates') }}" class="hover:text-white">80G / 12A</a>
+                </div>
+            </div>
+            <div>
+                <h3 class="text-white font-bold text-lg mb-4 text-brandOrange">Our Wings</h3>
+                <div class="space-y-1.5 text-sm">
+                    <a href="{{ route('rudrasena.form') }}" class="hover:text-white block">🔱 Rudrasena Dal</a>
+                    <a href="{{ route('kalabrundam.form') }}" class="hover:text-white block">🪘 Kala Brundam</a>
+                    <a href="{{ route('gramasevadal.form') }}" class="hover:text-white block">🌱 Grama Seva Dal</a>
+                    <a href="{{ route('organicfarmers.form') }}" class="hover:text-white block font-bold text-emerald-400">🌾 Organic Farmers</a>
                 </div>
             </div>
             <div>

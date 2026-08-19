@@ -4,7 +4,10 @@
 <!-- Public Website Single Project Header Banner -->
 <div class="bg-gray-900 text-white py-12 text-center" style="background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('/assets/images/banner.jpg') no-repeat center center; background-size: cover;">
     <div class="container mx-auto px-4">
-        <h1 class="text-2xl md:text-4xl font-bold uppercase tracking-wide text-orange-500">🔱 {{ $project->name }}</h1>
+        <div class="w-14 h-14 rounded-full overflow-hidden bg-white border-2 border-orange-500 shadow mx-auto mb-2 flex items-center justify-center p-0.5">
+            <img src="{{ asset('images/ABVHPS_LOGO.jpg') }}" class="w-full h-full object-cover rounded-full" alt="ABVHPS Logo">
+        </div>
+        <h1 class="text-2xl md:text-4xl font-bold uppercase tracking-wide text-orange-500">{{ $project->name }}</h1>
         <p class="text-xs md:text-sm text-gray-300 mt-2 uppercase tracking-widest">Core Service Mission Project Details</p>
     </div>
 </div>

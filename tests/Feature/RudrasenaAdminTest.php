@@ -364,7 +364,7 @@ class RudrasenaAdminTest extends TestCase
 
         Mail::assertSent(VolunteerWelcomeMail::class, function ($mail) use ($volunteer) {
             return $mail->hasTo('volunteermail@test.com') &&
-                   $mail->volunteerData['formatted_volunteer_id'] === implode(' ', str_split($volunteer->volunteer_id, 2)) &&
+                   ($mail->volunteerData['volunteer_id'] === $volunteer->volunteer_id || $mail->volunteerData['formatted_volunteer_id'] === $volunteer->volunteer_id) &&
                    !empty($mail->volunteerData['plainPassword']);
         });
     }

@@ -5,38 +5,45 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\ExamSetting;
 use App\Models\ExamApplication;
+use App\Models\NotificationLog;
+use App\Services\NotificationService;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\DB;
 
 class ExamController extends Controller
 {
        /**
      * Display the Central Sanathana Dharma Exam Application Desk
+    /**
+     * Display the Central Sanathana Dharma Exam Application Desk
      */
-    public function showApplicationForm()
+    public function showApplicationForm(Request $request)
     {
-        // Fetch active exam configurations fed by admin channel
-        $examSettings = \DB::table('exam_settings')->latest()->first();
+        $requestedExamId = $request->query('exam_id');
 
-        // Fallback default setup using strict array structure to avoid interface breakdown
-        if (!$examSettings) {
-            $examSettings = (object)[
-                'exam_title' => 'Sanathana Dharma Exam 2026',
-                'exam_date_time' => '2026-10-12 10:00:00',
-                'exam_center_location' => 'Main Center, Porumamilla',
-                'prize_details_json' => [
-                    '1st' => 'Tablet (1-MEMBER)',
-                    '2nd' => 'LED 32" TV\'s (2-MEMBERS)',
-                    '3rd' => 'Steel Dinner Set (6-MEMBERS)'
-                ],
-                'application_fee' => 41.00,
-                'id' => 1
-            ];
-        } else {
-            $examSettings->prize_details_json = json_decode($examSettings->prize_details_json, true);
+        // Fetch selected or active exam configuration
+        $examSettings = null;
+        if ($requestedExamId) {
+            $examSettings = \App\Models\ExamSetting::find($requestedExamId);
         }
 
-        return view('exam_application', compact('examSettings'));
+        if (!$examSettings) {
+            $examSettings = \App\Models\ExamSetting::where('status', 'active')->latest()->first()
+                ?? \App\Models\ExamSetting::latest()->first();
+        }
+
+        // Available active & upcoming exam cycles for selection
+        $availableExams = \App\Models\ExamSetting::whereIn('status', ['active', 'upcoming'])->orderBy('exam_date_time', 'asc')->get();
+
+        if ($examSettings) {
+            $examSettings->prize_details_json = is_array($examSettings->prize_details_json)
+                ? $examSettings->prize_details_json
+                : json_decode($examSettings->prize_details_json, true);
+        }
+
+        return view('exam_application', compact('examSettings', 'availableExams'));
     }
 
 
@@ -66,13 +73,18 @@ class ExamController extends Controller
         Session::put('exam_email_target', $request->email);
         Session::put('exam_email_otp', $otp);
 
-        // Core Email Pipeline Logic (Simulated log dispatch or Mailable structure)
-        \Log::info("ABVHPS EXAM OTP FOR {$request->email}: {$otp}");
-        
-        // In actual system, use Mail::raw or Mailable handler:
-        // Mail::raw("Your ABVHPS Sanathana Dharma Exam Verification Code is: {$otp}", function($message) use ($request) {
-        //     $message->to($request->email)->subject('ABVHPS Exam Verification Token');
-        // });
+        // Dispatch OTP via configured Mail service
+        try {
+            Mail::raw("🙏 Pranam! Your ABVHPS Sanathana Dharma Exam Verification Code is: {$otp}. This code is valid for your current session.", function($message) use ($request) {
+                $message->to($request->email)->subject('ABVHPS Exam Verification Token');
+            });
+        } catch (\Exception $e) {
+            \Log::error('Exam OTP Mail Dispatch Failure: ' . $e->getMessage());
+        }
+
+        if (config('app.debug')) {
+            \Log::info("ABVHPS EXAM OTP DISPATCHED FOR {$request->email}");
+        }
 
         return response()->json(['success' => true, 'message' => 'Verification token dispatched to your email successfully.']);
     }
@@ -255,6 +267,7 @@ class ExamController extends Controller
     {
         // Enforce rigid rules layout mapping image constraints
         $request->validate([
+            'exam_setting_id' => 'required|exists:exam_settings,id',
             'email' => 'required|email',
             'full_name' => 'required|string|max:255',
             'dob' => 'required|date',
@@ -266,6 +279,14 @@ class ExamController extends Controller
             'id_card_or_signature' => 'required|file|mimes:jpeg,png,jpg,pdf|max:2048',
             'payment_transaction_id' => 'required|string'
         ]);
+
+        $examSetting = \App\Models\ExamSetting::find($request->exam_setting_id);
+        if (!$examSetting || !in_array($examSetting->status, ['active', 'upcoming'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'The selected examination is currently closed for applications.'
+            ], 422);
+        }
 
         // Server-Side Mandatory Verification Gate
         if ($request->guardian_type === 'parents') {
@@ -334,12 +355,9 @@ class ExamController extends Controller
         $aadhaarPath = $request->hasFile('aadhaar') ? $request->file('aadhaar')->store('exam_proofs', 'public') : null;
 
         // --- UNIQUE 11-DIGIT RANDOM HALL TICKET GENERATOR DESK ---
-        // Loops safely until a completely unique 11-digit string budget is found
+        // Generates an exact 11-digit random number and verifies uniqueness
         do {
-            $currentYear = date('Y'); // Dynamic base prefix example: '2026'
-            $randomSevenDigits = rand(1000000, 9999999);
-            $generatedTicket = $currentYear . $randomSevenDigits;
-
+            $generatedTicket = (string) random_int(10000000000, 99999999999);
             $duplicateCheck = \DB::table('exam_applications')
                 ->where('hall_ticket_number', $generatedTicket)
                 ->exists();
@@ -347,7 +365,7 @@ class ExamController extends Controller
 
         // Core Pipeline Logic Insertion Matrix
         $applicationId = \DB::table('exam_applications')->insertGetId([
-            'exam_setting_id' => $request->exam_setting_id ?? (\DB::table('exam_settings')->latest()->value('id') ?? 1),
+            'exam_setting_id' => $examSetting->id,
             'email' => $request->email,
             'is_email_verified' => true,
             'full_name' => $request->full_name,
@@ -368,7 +386,7 @@ class ExamController extends Controller
             'photo_path' => $photoPath,
             'id_card_or_signature_path' => $idCardPath,
             'aadhaar_proof_path' => $aadhaarPath,
-            'amount_paid' => 41.00,
+            'amount_paid' => $examSetting->application_fee ?? 41.00,
             'payment_transaction_id' => $request->payment_transaction_id,
             'payment_status' => 'success',
             'hall_ticket_number' => $generatedTicket,
@@ -381,7 +399,7 @@ class ExamController extends Controller
             $emailDetails = [
                 'name' => $request->full_name,
                 'ticket' => $generatedTicket,
-                'fee' => '41.00'
+                'fee' => $examSetting->application_fee ?? '41.00'
             ];
             \Log::info("ABVHPS SYSTEM SUCCESS: Dynamic Email Log Dispatch for Ticket {$generatedTicket} sent to {$request->email}");
         } catch (\Exception $e) {
@@ -404,11 +422,35 @@ class ExamController extends Controller
      */
     public function showSuccessNotice($id)
     {
-        $application = \DB::table('exam_applications')->where('id', $id)->first();
-        $examSettings = \DB::table('exam_settings')->latest()->first();
+        $application = \App\Models\ExamApplication::with('examSetting')->find($id);
+
+        if (!$application) {
+            $application = \DB::table('exam_applications')->where('id', $id)->first();
+        }
 
         if (!$application) {
             abort(404, 'Exam application record not found.');
+        }
+
+        // If existing application doesn't have an 11-digit hall ticket number, generate one safely
+        if (empty($application->hall_ticket_number) || !preg_match('/^[0-9]{11}$/', $application->hall_ticket_number)) {
+            do {
+                $newTicket = (string) random_int(10000000000, 99999999999);
+                $exists = \DB::table('exam_applications')->where('hall_ticket_number', $newTicket)->exists();
+            } while ($exists);
+
+            \DB::table('exam_applications')->where('id', $application->id)->update(['hall_ticket_number' => $newTicket]);
+            $application->hall_ticket_number = $newTicket;
+        }
+
+        $examSettings = null;
+        if (!empty($application->exam_setting_id)) {
+            $examSettings = \App\Models\ExamSetting::find($application->exam_setting_id);
+        }
+
+        if (!$examSettings) {
+            $examSettings = \App\Models\ExamSetting::latest()->first()
+                ?? \DB::table('exam_settings')->latest()->first();
         }
 
         return view('exam_success_notice', compact('application', 'examSettings'));
@@ -419,21 +461,55 @@ class ExamController extends Controller
      */
     public function downloadSyllabusPdf($id)
     {
-        // Safe streaming download endpoint configuration desk
-        $fileDiskTarget = storage_path('app/public/syllabus/sanathana_dharma_2026.pdf');
-        
-        if (file_exists($fileDiskTarget)) {
-            return response()->download($fileDiskTarget);
+        $application = \App\Models\ExamApplication::find($id);
+        $exam = null;
+
+        if ($application) {
+            $exam = $application->examSetting ?? \App\Models\ExamSetting::find($application->exam_setting_id);
+        } else {
+            $exam = \App\Models\ExamSetting::find($id);
         }
 
-        return back()->with('error', 'Target Syllabus Document File is currently missing from storage.');
+        if (!$exam || empty($exam->syllabus_pdf_path)) {
+            return back()->with('error', 'Syllabus is currently unavailable. Please contact the examination desk.');
+        }
+
+        $sanitizedTitle = preg_replace('/[^A-Za-z0-9_\-]/', '_', $exam->exam_title);
+        $downloadName = 'ABVHPS_' . ($sanitizedTitle ?: 'Exam') . '_Syllabus.pdf';
+
+        // Check Storage disk public first
+        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($exam->syllabus_pdf_path)) {
+            return \Illuminate\Support\Facades\Storage::disk('public')->download($exam->syllabus_pdf_path, $downloadName, [
+                'Content-Type' => 'application/pdf',
+            ]);
+        }
+
+        // Check direct storage locations
+        $filePath = storage_path('app/public/' . $exam->syllabus_pdf_path);
+        if (!file_exists($filePath)) {
+            $filePathAlt = storage_path('app/' . $exam->syllabus_pdf_path);
+            if (file_exists($filePathAlt)) {
+                $filePath = $filePathAlt;
+            } else {
+                $filePathPublic = public_path('storage/' . $exam->syllabus_pdf_path);
+                if (file_exists($filePathPublic)) {
+                    $filePath = $filePathPublic;
+                } else {
+                    return back()->with('error', 'Syllabus is currently unavailable. Please contact the examination desk.');
+                }
+            }
+        }
+
+        return response()->download($filePath, $downloadName, [
+            'Content-Type' => 'application/pdf',
+        ]);
     }
-        /**
+
+    /**
      * Display Central Exam Results Portal & Top 6 Winners Showcase Board
      */
     public function showResultsPortal()
     {
-        // Core Query Pipeline: Fetch Top 6 verified winners ordered strictly by their rank
         $winners = \DB::table('exam_applications')
             ->where('show_on_winners_wall', true)
             ->whereNotNull('winner_rank')
@@ -443,8 +519,12 @@ class ExamController extends Controller
 
         return view('exam_results', compact('winners'));
     }
+
     /**
      * Search Candidate Evaluation Matrix via 11-Digit Unique Hall Ticket Number
+     *
+     * SECURITY: Draft results are never exposed.
+     * A candidate sees their result ONLY after Admin has published it.
      */
     public function searchStudentResult(Request $request)
     {
@@ -452,38 +532,342 @@ class ExamController extends Controller
             'hall_ticket_number' => 'required|string|size:11'
         ]);
 
-        // Secure Lookup Pipeline against application records
-        $studentResult = \DB::table('exam_applications')
+        // First check if the application exists at all
+        $application = DB::table('exam_applications')
             ->where('hall_ticket_number', $request->hall_ticket_number)
             ->where('payment_status', 'success')
             ->first();
 
-        if (!$studentResult) {
+        if (!$application) {
             return response()->json([
-                'success' => false, 
-                'message' => 'Given 11-Digit Hall Ticket number is not registered or valid.'
+                'success' => false,
+                'message' => 'No registration found for this Hall Ticket Number.'
             ]);
         }
 
-        // Return core identity and grading scores safely
+        // Guard: draft results must NOT be exposed
+        if (($application->result_publication_status ?? 'draft') !== 'published') {
+            return response()->json([
+                'success'   => false,
+                'draft'     => true,
+                'message'   => 'Results for this Hall Ticket Number have not been announced yet. Please check back later.'
+            ]);
+        }
+
+        // Fetch exam details for display
+        $exam = DB::table('exam_settings')
+            ->where('id', $application->exam_setting_id)
+            ->first();
+
+        // Safe percentage calculation
+        $percentage = null;
+        if ($application->total_marks > 0 && $application->marks_obtained !== null) {
+            $percentage = round(($application->marks_obtained / $application->total_marks) * 100, 2);
+        }
+
         return response()->json([
-            'success' => true,
-            'full_name' => $studentResult->full_name,
-            'hall_ticket' => $studentResult->hall_ticket_number,
-            'school_name' => $studentResult->school_college_name,
-            'marks' => $studentResult->marks_obtained ?? 'Not Evaluated Yet',
-            'status' => ucfirst($studentResult->result_status),
-            'prize' => $studentResult->prize_title_won ?? null
+            'success'          => true,
+            'full_name'        => $application->full_name,
+            'hall_ticket'      => $application->hall_ticket_number,
+            'school_name'      => $application->school_college_name,
+            'exam_title'       => $exam->exam_title ?? 'Sanathana Dharma Examination',
+            'exam_type'        => $exam->exam_type ?? null,
+            'exam_date'        => $exam->exam_date_time ?? null,
+            'marks'            => $application->marks_obtained,
+            'total_marks'      => $application->total_marks,
+            'percentage'       => $percentage,
+            'grade'            => $application->grade,
+            'status'           => $application->result_status,
+            'prize'            => $application->prize_title_won ?? null,
         ]);
     }
 
+    // =========================================================================
+    // ADMIN RESULT MANAGEMENT
+    // =========================================================================
+
     /**
-     * Admin Exam Info Board Roster (Continuous Loop Cycles)
+     * Result Entry Desk — shows all applicants for one specific exam.
+     * Admin selects an exam and sees only that exam's candidates + their result status.
      */
-    public function adminIndex()
+    public function adminResultsIndex(Request $request, int $examId)
+    {
+        $exam = ExamSetting::findOrFail($examId);
+
+        // Only this exam's applicants
+        $applicationsQuery = ExamApplication::where('exam_setting_id', $examId)
+            ->orderBy('id');
+
+        // Optional filters
+        $filterStatus = $request->query('result_status');
+        $filterPub    = $request->query('publication_status');
+        $search       = $request->query('search');
+
+        if ($filterStatus) {
+            $applicationsQuery->where('result_status', $filterStatus);
+        }
+        if ($filterPub) {
+            $applicationsQuery->where('result_publication_status', $filterPub);
+        }
+        if ($search) {
+            $applicationsQuery->where(function ($q) use ($search) {
+                $q->where('full_name',         'LIKE', "%{$search}%")
+                  ->orWhere('hall_ticket_number','LIKE', "%{$search}%")
+                  ->orWhere('father_membership_id','LIKE', "%{$search}%")
+                  ->orWhere('mother_membership_id','LIKE', "%{$search}%")
+                  ->orWhere('guardian_mobile_or_id','LIKE', "%{$search}%");
+            });
+        }
+
+        $applications = $applicationsQuery->paginate(25)->withQueryString();
+
+        // Stats for this exam
+        $stats = [
+            'total'     => ExamApplication::where('exam_setting_id', $examId)->count(),
+            'drafted'   => ExamApplication::where('exam_setting_id', $examId)
+                              ->whereIn('result_status', ['passed', 'failed'])
+                              ->where('result_publication_status', 'draft')
+                              ->count(),
+            'published' => ExamApplication::where('exam_setting_id', $examId)
+                              ->where('result_publication_status', 'published')
+                              ->count(),
+            'pending'   => ExamApplication::where('exam_setting_id', $examId)
+                              ->where('result_status', 'pending')
+                              ->count(),
+            'notif_logged'     => NotificationLog::where('notifiable_type', ExamApplication::class)
+                              ->whereIn('notifiable_id',
+                                  ExamApplication::where('exam_setting_id', $examId)->pluck('id')
+                              )
+                              ->where('event_type', 'exam_result_announced')
+                              ->whereIn('status', ['logged', 'sent', 'created'])
+                              ->distinct('notifiable_id')
+                              ->count('notifiable_id'),
+            'notif_failed'    => NotificationLog::where('notifiable_type', ExamApplication::class)
+                              ->whereIn('notifiable_id',
+                                  ExamApplication::where('exam_setting_id', $examId)->pluck('id')
+                              )
+                              ->where('event_type', 'exam_result_announced')
+                              ->where('status', 'failed')
+                              ->distinct('notifiable_id')
+                              ->count('notifiable_id'),
+        ];
+
+        // All exams for sidebar breadcrumb
+        $allExams = ExamSetting::orderBy('id', 'desc')->get(['id', 'exam_title', 'status']);
+
+        return view('admin.exam_results_desk', compact(
+            'exam', 'applications', 'stats', 'allExams',
+            'filterStatus', 'filterPub', 'search'
+        ));
+    }
+
+    /**
+     * Save (or update) one candidate's result as Draft.
+     * Admin enters marks, total, grade, result_status, remarks.
+     * Result is saved with result_publication_status = 'draft'.
+     */
+    public function adminResultSave(Request $request, int $appId)
+    {
+        $application = ExamApplication::findOrFail($appId);
+
+        $validated = $request->validate([
+            'marks_obtained' => 'nullable|integer|min:0',
+            'total_marks'    => 'nullable|integer|min:1',
+            'grade'          => 'nullable|string|max:10',
+            'result_status'  => 'required|in:pending,passed,failed',
+            'winner_rank'    => 'nullable|integer|min:1|max:6',
+            'prize_title_won'=> 'nullable|string|max:255',
+            'show_on_winners_wall' => 'nullable|boolean',
+            'result_remarks' => 'nullable|string|max:1000',
+        ]);
+
+        // Validate marks <= total_marks
+        if (
+            isset($validated['marks_obtained']) &&
+            isset($validated['total_marks']) &&
+            $validated['marks_obtained'] > $validated['total_marks']
+        ) {
+            return back()
+                ->withErrors(['marks_obtained' => 'Marks obtained cannot exceed total marks.'])
+                ->withInput();
+        }
+
+        $application->marks_obtained      = $validated['marks_obtained'] ?? $application->marks_obtained;
+        $application->total_marks         = $validated['total_marks']    ?? $application->total_marks;
+        $application->grade               = $validated['grade']          ?? $application->grade;
+        $application->result_status       = $validated['result_status'];
+        $application->winner_rank         = $validated['winner_rank']    ?? null;
+        $application->prize_title_won     = $validated['prize_title_won']?? null;
+        $application->show_on_winners_wall= (bool)($validated['show_on_winners_wall'] ?? false);
+        $application->result_remarks      = $validated['result_remarks'] ?? null;
+        // Draft — do NOT change publication status on plain save
+        $application->result_publication_status = $application->result_publication_status ?? 'draft';
+        $application->save();
+
+        return redirect()
+            ->route('admin.exams.results', $application->exam_setting_id)
+            ->with('success', "Result saved as Draft for: {$application->full_name}");
+    }
+
+    /**
+     * Publish results for ALL applicants of a specific exam.
+     *
+     * Steps:
+     *   1. Mark ALL applicants for this exam as result_publication_status = 'published'.
+     *   2. Send result-announcement notifications (per-channel idempotency enforced in NotificationService).
+     *   3. Mark result_notification_sent = true on each application after notifications run.
+     *   4. Notification failures do NOT roll back publication.
+     *
+     * If Admin clicks Publish again:
+     *   - Publication status is already 'published' — no harm done.
+     *   - NotificationService skips channels where log row already exists.
+     *   - Returns counts with all channels showing 'skipped'.
+     */
+    public function adminPublishResults(Request $request, int $examId)
+    {
+        $exam = ExamSetting::findOrFail($examId);
+
+        // Publish ALL applicants for this exam (idempotent — already published rows stay published)
+        DB::table('exam_applications')
+            ->where('exam_setting_id', $examId)
+            ->update([
+                'result_publication_status' => 'published',
+                'result_published_at'       => now(),
+                'updated_at'                => now(),
+            ]);
+
+        $publishedCount = ExamApplication::where('exam_setting_id', $examId)->count();
+
+        \App\Services\AuditLogger::log('EXAM_RESULTS_PUBLISHED', 'ExamSetting', (string)$examId, [
+            'exam_title' => $exam->exam_title,
+            'published_count' => $publishedCount
+        ]);
+
+        // Send notifications — independent of publication, failures do NOT revert publication
+        $notificationTotals = ['email' => [], 'whatsapp' => [], 'in_app' => [], 'processed' => 0];
+        try {
+            $notifService = app(NotificationService::class);
+            $notificationTotals = $notifService->sendExamResultsForExam($exam);
+
+            // Mark notification flag on each application (best-effort, non-blocking)
+            DB::table('exam_applications')
+                ->where('exam_setting_id', $examId)
+                ->update(['result_notification_sent' => true, 'updated_at' => now()]);
+
+        } catch (\Throwable $e) {
+            Log::error('[ExamController] Notification dispatch failed after publish', [
+                'exam_id' => $examId,
+                'error'   => $e->getMessage(),
+            ]);
+            // Publication already committed — do not re-throw
+        }
+
+        // Build human-readable notification summary
+        $emailSummary    = $this->summariseNotifChannel($notificationTotals['email']    ?? []);
+        $whatsappSummary = $this->summariseNotifChannel($notificationTotals['whatsapp'] ?? []);
+        $inAppSummary    = $this->summariseNotifChannel($notificationTotals['in_app']   ?? []);
+
+        $successMsg = "{$publishedCount} result(s) published for: {$exam->exam_title}. "
+            . "Notifications — Email: {$emailSummary} | WhatsApp: {$whatsappSummary} | In-App: {$inAppSummary}.";
+
+        return redirect()
+            ->route('admin.exams.results', $examId)
+            ->with('success', $successMsg);
+    }
+
+    /**
+     * Unpublish (roll back to draft) results for a specific exam.
+     * No notifications are sent on unpublish.
+     * Notification logs are NOT deleted (audit trail preserved).
+     */
+    public function adminUnpublishResults(int $examId)
+    {
+        $exam = ExamSetting::findOrFail($examId);
+
+        DB::table('exam_applications')
+            ->where('exam_setting_id', $examId)
+            ->update([
+                'result_publication_status' => 'draft',
+                'result_published_at'       => null,
+                'result_notification_sent'  => false,
+                'updated_at'                => now(),
+            ]);
+
+        \App\Services\AuditLogger::log('EXAM_RESULTS_UNPUBLISHED', 'ExamSetting', (string)$examId, [
+            'exam_title' => $exam->exam_title
+        ]);
+
+        return redirect()
+            ->route('admin.exams.results', $examId)
+            ->with('success', "Results unpublished (moved to Draft) for: {$exam->exam_title}");
+    }
+
+    /**
+     * Produce a short human-readable summary of per-channel notification counts.
+     * e.g. "145 logged, 5 failed"
+     */
+    private function summariseNotifChannel(array $counts): string
+    {
+        if (empty($counts)) {
+            return 'no data';
+        }
+        $parts = [];
+        foreach ($counts as $status => $n) {
+            if ($n > 0) {
+                $parts[] = "{$n} {$status}";
+            }
+        }
+        return $parts ? implode(', ', $parts) : 'none';
+    }
+
+    /**
+     * Admin Exam Info Board & Multi-Exam Applicant Roster Desk
+     */
+    public function adminIndex(Request $request)
     {
         $exams = \App\Models\ExamSetting::withCount('applications')->orderBy('id', 'desc')->get();
-        return view('admin.exams_index', compact('exams'));
+        $selectedExamId = $request->query('exam_id');
+        $searchQuery = $request->query('search');
+
+        // Multi-Exam Applications Query Engine
+        $applicationsQuery = \App\Models\ExamApplication::with('examSetting')->orderBy('id', 'desc');
+
+        if (!empty($selectedExamId) && $selectedExamId !== 'all') {
+            $applicationsQuery->where('exam_setting_id', $selectedExamId);
+        }
+
+        if (!empty($searchQuery)) {
+            $applicationsQuery->where(function($q) use ($searchQuery) {
+                $q->where('full_name', 'LIKE', "%{$searchQuery}%")
+                  ->orWhere('email', 'LIKE', "%{$searchQuery}%")
+                  ->orWhere('mobile', 'LIKE', "%{$searchQuery}%")
+                  ->orWhere('hall_ticket_number', 'LIKE', "%{$searchQuery}%")
+                  ->orWhere('father_membership_id', 'LIKE', "%{$searchQuery}%")
+                  ->orWhere('mother_membership_id', 'LIKE', "%{$searchQuery}%")
+                  ->orWhere('guardian_mobile_or_id', 'LIKE', "%{$searchQuery}%");
+            });
+        }
+
+        $applications = $applicationsQuery->paginate(15)->withQueryString();
+
+        // Exam-aware summary statistics
+        $summaryQuery = \App\Models\ExamApplication::query();
+        if (!empty($selectedExamId) && $selectedExamId !== 'all') {
+            $summaryQuery->where('exam_setting_id', $selectedExamId);
+        }
+        $totalApplications = (clone $summaryQuery)->count();
+        $paidApplications = (clone $summaryQuery)->where('payment_status', 'success')->count();
+        $verifiedApplications = (clone $summaryQuery)->where('is_email_verified', true)->count();
+
+        return view('admin.exams_index', compact(
+            'exams', 
+            'applications', 
+            'selectedExamId', 
+            'searchQuery', 
+            'totalApplications', 
+            'paidApplications', 
+            'verifiedApplications'
+        ));
     }
 
     /**
@@ -501,6 +885,7 @@ class ExamController extends Controller
     {
         $request->validate([
             'exam_title' => 'required|string|max:255',
+            'exam_type' => 'required|in:theory,mcq,both',
             'exam_date_time' => 'required|date',
             'exam_center_location' => 'required|string|max:255',
             'application_fee' => 'required|numeric|min:0',
@@ -509,6 +894,9 @@ class ExamController extends Controller
             'prize_details' => 'nullable|string',
             'guidelines' => 'nullable|string',
             'status' => 'required|in:active,upcoming,completed',
+        ], [
+            'exam_type.required' => 'Please select an Exam Type (Theory, MCQ, or Both).',
+            'exam_type.in' => 'Selected Exam Type must be Theory, MCQ, or Both (Theory + MCQ).',
         ]);
 
         $syllabusPath = null;
@@ -521,15 +909,18 @@ class ExamController extends Controller
             $bannerPath = $request->file('banner_image')->store('exams/banners', 'public');
         }
 
-        $prizes = $request->prize_details ? explode("\n", str_replace("\r", "", $request->prize_details)) : ['1st: Gold Trophy & Cash Prize', '2nd: Silver Award', '3rd: Merit Certificate'];
+        $prizes = $request->filled('prize_details') 
+            ? array_values(array_filter(array_map('trim', explode("\n", str_replace("\r", "", $request->prize_details))), fn($p) => $p !== ''))
+            : [];
 
         \App\Models\ExamSetting::create([
             'exam_title' => $request->exam_title,
+            'exam_type' => $request->exam_type,
             'syllabus_pdf_path' => $syllabusPath ?? 'exams/syllabus/sample_syllabus.pdf',
             'banner_image_path' => $bannerPath,
             'exam_date_time' => $request->exam_date_time,
             'exam_center_location' => $request->exam_center_location,
-            'prize_details_json' => json_encode(array_filter($prizes)),
+            'prize_details_json' => json_encode($prizes),
             'guidelines' => $request->guidelines,
             'application_fee' => $request->application_fee,
             'status' => $request->status,
@@ -544,8 +935,7 @@ class ExamController extends Controller
     public function adminEdit($id)
     {
         $exam = \App\Models\ExamSetting::findOrFail($id);
-        $prizesArray = is_array($exam->prize_details_json) ? $exam->prize_details_json : json_decode($exam->prize_details_json, true);
-        $prizesText = is_array($prizesArray) ? implode("\n", $prizesArray) : '';
+        $prizesText = implode("\n", $exam->prizes_list);
         return view('admin.exam_edit', compact('exam', 'prizesText'));
     }
 
@@ -558,6 +948,7 @@ class ExamController extends Controller
 
         $request->validate([
             'exam_title' => 'required|string|max:255',
+            'exam_type' => 'required|in:theory,mcq,both',
             'exam_date_time' => 'required|date',
             'exam_center_location' => 'required|string|max:255',
             'application_fee' => 'required|numeric|min:0',
@@ -566,6 +957,9 @@ class ExamController extends Controller
             'prize_details' => 'nullable|string',
             'guidelines' => 'nullable|string',
             'status' => 'required|in:active,upcoming,completed',
+        ], [
+            'exam_type.required' => 'Please select an Exam Type (Theory, MCQ, or Both).',
+            'exam_type.in' => 'Selected Exam Type must be Theory, MCQ, or Both (Theory + MCQ).',
         ]);
 
         if ($request->hasFile('syllabus_pdf')) {
@@ -576,12 +970,13 @@ class ExamController extends Controller
             $exam->banner_image_path = $request->file('banner_image')->store('exams/banners', 'public');
         }
 
-        if ($request->has('prize_details')) {
-            $prizes = explode("\n", str_replace("\r", "", $request->prize_details));
-            $exam->prize_details_json = json_encode(array_filter($prizes));
-        }
+        $prizes = $request->filled('prize_details')
+            ? array_values(array_filter(array_map('trim', explode("\n", str_replace("\r", "", $request->prize_details))), fn($p) => $p !== ''))
+            : [];
+        $exam->prize_details_json = json_encode($prizes);
 
         $exam->exam_title = $request->exam_title;
+        $exam->exam_type = $request->exam_type;
         $exam->exam_date_time = $request->exam_date_time;
         $exam->exam_center_location = $request->exam_center_location;
         $exam->guidelines = $request->guidelines;

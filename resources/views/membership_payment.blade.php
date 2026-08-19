@@ -3,7 +3,9 @@
 @section('content')
 <section class="min-h-[500px] flex items-center justify-center bg-gray-50 py-12 px-4">
     <div class="max-w-md w-full bg-white p-8 rounded-xl shadow border border-gray-100 text-center">
-        <span class="text-4xl text-brandOrange">🔱</span>
+        <div class="w-16 h-16 rounded-full overflow-hidden bg-white border-2 border-brandOrange shadow-sm mx-auto mb-2 flex items-center justify-center p-0.5 shrink-0">
+            <img src="{{ asset('images/ABVHPS_LOGO.jpg') }}" class="w-full h-full object-cover rounded-full" alt="ABVHPS Logo">
+        </div>
         <h2 class="mt-2 text-2xl font-extrabold text-brandGray">Membership Fee Payment</h2>
         <p class="text-xs text-gray-500 mt-1">Akhanda Bharatha Viswa Hindu Parirakshana Samiti</p>
         

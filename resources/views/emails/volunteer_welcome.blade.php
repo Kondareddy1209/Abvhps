@@ -109,7 +109,7 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <div style="font-size: 28px; margin-bottom: 4px;">🔱</div>
+            <img src="{{ asset('images/ABVHPS_LOGO.jpg') }}" width="56" height="56" style="border-radius: 50%; object-fit: cover; display: inline-block; margin-bottom: 6px; border: 2px solid #ffffff;" alt="ABVHPS Logo">
             <h1>AKHANDA BHARATHA VISWA HINDU PARIRAKSHANA SAMITI</h1>
             <p>ABVHPS Central Administrative Board</p>
         </div>
@@ -128,16 +128,16 @@
             <div class="credentials-box">
                 <h2>🔐 Your Official Volunteer Credentials</h2>
                 <div class="credential-row">
-                    <span class="credential-label">Volunteer ID Code:</span>
-                    <span class="credential-value" style="color: #ea580c; font-size: 15px;">{{ $volunteerData['formatted_volunteer_id'] ?? 'N/A' }}</span>
+                    <span class="credential-label">Volunteer ID:</span>
+                    <span class="credential-value" style="color: #ea580c; font-size: 16px; font-weight: bold;">{{ $volunteerData['volunteer_id'] ?? ($volunteerData['formatted_volunteer_id'] ?? 'N/A') }}</span>
                 </div>
                 <div class="credential-row">
-                    <span class="credential-label">Login Email:</span>
-                    <span class="credential-value">{{ $volunteerData['email'] ?? 'N/A' }}</span>
+                    <span class="credential-label">Login ID:</span>
+                    <span class="credential-value" style="color: #ea580c; font-size: 15px; font-weight: bold;">{{ $volunteerData['volunteer_login_id'] ?? ($volunteerData['volunteer_id'] ?? 'N/A') }}</span>
                 </div>
                 <div class="credential-row">
                     <span class="credential-label">Default Password:</span>
-                    <span class="credential-value" style="color: #047857; font-size: 14px;">{{ $volunteerData['plainPassword'] ?? 'N/A' }}</span>
+                    <span class="credential-value" style="color: #047857; font-size: 14px;">{{ $volunteerData['plainPassword'] ?? 'password' }}</span>
                 </div>
                 <div class="credential-row">
                     <span class="credential-label">Assigned Cadder:</span>
