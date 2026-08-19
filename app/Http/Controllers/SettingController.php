@@ -17,6 +17,7 @@ class SettingController extends Controller
         $settings = [
             'site_title' => SiteSetting::get('site_title', 'ABVHPS - Akhanda Bharatha Viswa Hindu Parirakshana Samiti'),
             'contact_phone' => SiteSetting::get('contact_phone', '+91 8884933379'),
+            'whatsapp_number' => SiteSetting::getWhatsAppNumber(),
             'contact_email' => SiteSetting::get('contact_email', 'info@abvhps.org'),
             'contact_address' => SiteSetting::get('contact_address', 'Survey No:1826, Shanmukhapuram, Akkalareddy Palli Village and Post, Porumamilla Mandalam, Kadapa, A.P - 516193'),
             'facebook_url' => SiteSetting::get('facebook_url', 'https://facebook.com/abvhps'),
@@ -35,9 +36,21 @@ class SettingController extends Controller
      */
     public function adminUpdate(Request $request)
     {
-        $fields = [
+        $rules = [
             'site_title' => 'string|max:255',
             'contact_phone' => 'string|max:50',
+            'whatsapp_number' => [
+                'nullable',
+                'string',
+                'max:50',
+                'regex:/^[\+]?[0-9\s\-\(\)]+$/',
+                function ($attribute, $value, $fail) {
+                    $digits = preg_replace('/[^0-9]/', '', (string)$value);
+                    if (strlen($digits) < 10 || strlen($digits) > 15) {
+                        $fail('The WhatsApp number must contain between 10 and 15 digits.');
+                    }
+                }
+            ],
             'contact_email' => 'email|max:100',
             'contact_address' => 'string|max:500',
             'facebook_url' => 'nullable|url|max:255',
@@ -46,9 +59,9 @@ class SettingController extends Controller
             'footer_about' => 'string|max:1000',
         ];
 
-        $request->validate($fields);
+        $request->validate($rules);
 
-        foreach (array_keys($fields) as $key) {
+        foreach (array_keys($rules) as $key) {
             if ($request->has($key)) {
                 SiteSetting::set($key, $request->input($key));
             }
