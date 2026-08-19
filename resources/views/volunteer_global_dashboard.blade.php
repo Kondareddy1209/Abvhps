@@ -143,7 +143,7 @@
     @if($assignedRole === 'support_team')
         <div class="bg-gray-900 p-5 rounded-xl shadow text-gray-200 space-y-3 font-mono text-[11px] border border-gray-800">
             <p class="text-green-400 font-bold border-b border-gray-800 pb-1.5 uppercase tracking-wide">⚙️ System Infrastructure Hard Logs (IT Support Mode Only)</p>
-            <p class="text-gray-400">Environment State: <span class="text-white font-bold">Localhost Sandbox v8.x</span></p>
+            <p class="text-gray-400">Environment State: <span class="text-white font-bold">{{ config('app.env') === 'production' ? 'AWS Production Cloud' : 'Development Sandbox' }}</span></p>
             <p class="text-gray-400">Dynamic Active Pipeline Gateways: <span class="text-yellow-400 font-bold">5 Nodes Operational</span></p>
             <p class="text-gray-400">Image Processing Matrix Compression Target: <span class="text-green-400 font-bold">Active &lt; 2KB Enforced</span></p>
             <p class="text-gray-400">Database Engine Buffer Rows Status: <span class="text-white font-bold">Healthy (0 Deadlocks)</span></p>

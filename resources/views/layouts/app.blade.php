@@ -4,8 +4,67 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>ABVHPS - Akhanda Bharatha Viswa Hindu Parirakshana Samiti</title>
+
+    {{-- 1. Primary Page Title & Meta Description --}}
+    <title>@yield('title', 'ABVHPS | Akhanda Bharatha Viswa Hindu Parirakshana Samiti')</title>
+    <meta name="description" content="@yield('meta_description', 'Akhanda Bharatha Viswa Hindu Parirakshana Samiti (ABVHPS) is dedicated to preserving Sanatana Dharma, constructing temples, expanding goshalas, Annapurna daily meals, and community empowerment across India.')">
+    <meta name="robots" content="@yield('meta_robots', 'index, follow')">
+
+    {{-- 2. Canonical URL --}}
+    <link rel="canonical" href="@yield('canonical_url', url()->current())">
     <link rel="icon" type="image/png" href="{{ asset('images/logo_abvhps.png') }}">
+
+    {{-- 3. Open Graph / Facebook / WhatsApp Metadata --}}
+    <meta property="og:site_name" content="ABVHPS">
+    <meta property="og:type" content="@yield('og_type', 'website')">
+    <meta property="og:title" content="@yield('og_title', 'ABVHPS | Akhanda Bharatha Viswa Hindu Parirakshana Samiti')">
+    <meta property="og:description" content="@yield('og_description', 'Akhanda Bharatha Viswa Hindu Parirakshana Samiti (ABVHPS) is dedicated to preserving Sanatana Dharma, constructing temples, expanding goshalas, and community empowerment across India.')">
+    <meta property="og:url" content="@yield('og_url', url()->current())">
+    <meta property="og:image" content="@yield('og_image', asset('images/ABVHPS_LOGO.jpg'))">
+    <meta property="og:image:alt" content="@yield('og_image_alt', 'ABVHPS Emblem')">
+
+    {{-- 4. Twitter / X Card Metadata --}}
+    <meta name="twitter:card" content="@yield('twitter_card', 'summary_large_image')">
+    <meta name="twitter:title" content="@yield('twitter_title', 'ABVHPS | Akhanda Bharatha Viswa Hindu Parirakshana Samiti')">
+    <meta name="twitter:description" content="@yield('twitter_description', 'Official Portal of Akhanda Bharatha Viswa Hindu Parirakshana Samiti.')">
+    <meta name="twitter:image" content="@yield('twitter_image', asset('images/ABVHPS_LOGO.jpg'))">
+
+    {{-- 5. Schema.org JSON-LD Structured Data (Organization & WebSite) --}}
+    @php
+        $seoAppUrl = rtrim(config('app.url', 'https://abvhps.org'), '/');
+        $schemaData = [
+            '@context' => 'https://schema.org',
+            '@graph' => [
+                [
+                    '@type' => 'Organization',
+                    '@id' => $seoAppUrl . '/#organization',
+                    'name' => 'Akhanda Bharatha Viswa Hindu Parirakshana Samiti',
+                    'alternateName' => 'ABVHPS',
+                    'url' => $seoAppUrl,
+                    'logo' => asset('images/ABVHPS_LOGO.jpg'),
+                    'contactPoint' => [
+                        '@type' => 'ContactPoint',
+                        'telephone' => \App\Models\SiteSetting::get('contact_phone', '+91 8884933379'),
+                        'contactType' => 'customer service',
+                        'email' => \App\Models\SiteSetting::get('contact_email', 'info@abvhps.org'),
+                        'areaServed' => 'IN',
+                        'availableLanguage' => ['en', 'te', 'hi']
+                    ]
+                ],
+                [
+                    '@type' => 'WebSite',
+                    '@id' => $seoAppUrl . '/#website',
+                    'url' => $seoAppUrl,
+                    'name' => 'ABVHPS Official Portal',
+                    'publisher' => [
+                        '@id' => $seoAppUrl . '/#organization'
+                    ]
+                ]
+            ]
+        ];
+    @endphp
+    <script type="application/ld+json">{!! json_encode($schemaData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
+
     <!-- Tailwind CSS v4 Browser/Play CDN Link -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style type="text/tailwindcss">

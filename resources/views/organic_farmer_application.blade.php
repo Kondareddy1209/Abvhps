@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('title', 'Organic Farmers Agriculture Network | ABVHPS')
+@section('meta_description', 'Join the ABVHPS Organic Farmers initiative promoting cow-based traditional natural farming and desi seed preservation.')
+
 @section('content')
 <div class="max-w-4xl mx-auto py-10 px-4">
     

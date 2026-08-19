@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Official Volunteer Directory & Leadership Matrix | ABVHPS')
+@section('title', 'Our Team & Leadership Directory | ABVHPS')
+@section('meta_description', 'Directory of approved and active ABVHPS volunteers, cadres, and leadership representatives serving nationwide.')
 
 @section('content')
 <div class="bg-gray-50 min-h-screen pb-16">

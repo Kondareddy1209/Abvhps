@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('title', '80G & 12A Compliance Certificates | ABVHPS')
+@section('meta_description', 'Official 80G and 12A tax exemption orders, registration certificates, and legal compliance documents of ABVHPS Trust.')
+
 @section('content')
 <div class="bg-gray-50 min-h-screen py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-7xl mx-auto space-y-10">

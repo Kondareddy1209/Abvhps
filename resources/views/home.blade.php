@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('title', 'ABVHPS | Akhanda Bharatha Viswa Hindu Parirakshana Samiti')
+@section('meta_description', 'Akhanda Bharatha Viswa Hindu Parirakshana Samiti (ABVHPS) is dedicated to preserving Sanatana Dharma, constructing temples, protecting goshalas, Annapurna seva, and community empowerment across India.')
+
 @section('content')
     @php
         $homeBanner = \App\Models\Banner::getBannerForPage('home');
@@ -144,82 +147,18 @@
     </div>
 </section>
 
-<!-- 4. Dynamic Live Fundraising Section -->
-@if(isset($fundraisingCampaigns) && $fundraisingCampaigns->isNotEmpty())
-<section class="py-16 px-4 bg-white border-t border-gray-100">
-    <div class="max-w-6xl mx-auto">
-        <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
-            <div>
-                <span class="text-xs font-bold text-brandOrange uppercase tracking-wider block">Dharma Seva Initiatives</span>
-                <h2 class="text-2xl sm:text-3xl font-extrabold text-brandGray uppercase tracking-tight mt-1">Current Dharma Seva Campaigns</h2>
-            </div>
-            <a href="{{ route('public.fundraising.index') }}" class="bg-brandOrange hover:bg-opacity-90 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow-sm transition uppercase tracking-wider inline-flex items-center gap-1 shrink-0 self-start sm:self-auto">
-                View All Campaigns →
-            </a>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            @foreach($fundraisingCampaigns as $cItem)
-                @php
-                    $cGoal = $cItem->goal_amount ?? 1;
-                    $cRaised = $cItem->raised_amount ?? 0;
-                    $cPercent = ($cRaised / max(1, $cGoal)) * 100;
-                    $cPercent = min(100, max(0, $cPercent));
-                @endphp
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col justify-between hover:shadow-md transition">
-                    <div>
-                        <div class="aspect-[16/10] w-full bg-gray-100 overflow-hidden relative">
-                            @if(!empty($cItem->cover_image))
-                                <img src="{{ asset('storage/' . $cItem->cover_image) }}" class="w-full h-full object-cover" alt="{{ $cItem->title }}">
-                            @elseif(!empty($cItem->image_path))
-                                <img src="{{ $cItem->image_path }}" class="w-full h-full object-cover" alt="{{ $cItem->title }}">
-                            @else
-                                <div class="w-full h-full flex items-center justify-center text-3xl">🌾</div>
-                            @endif
-                            <span class="absolute top-2.5 left-2.5 bg-brandOrange text-white text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase shadow-xs">
-                                Active Cause
-                            </span>
-                        </div>
-                        <div class="p-5">
-                            <h3 class="font-bold text-sm text-brandGray line-clamp-2 uppercase h-10 mb-2">
-                                {{ $cItem->title }}
-                            </h3>
-                            <p class="text-xs text-gray-500 line-clamp-2 leading-relaxed mb-4">
-                                {{ strip_tags($cItem->description ?? '') }}
-                            </p>
-                            
-                            <div class="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden mb-2">
-                                <div class="bg-brandOrange h-full rounded-full transition-all duration-500" style="width: {{ $cPercent }}%"></div>
-                            </div>
-                            <div class="flex justify-between text-[11px] font-bold text-gray-600">
-                                <span>Raised: <strong class="text-brandOrange font-mono">₹{{ number_format($cRaised) }}</strong></span>
-                                <span>Goal: <strong class="text-gray-900 font-mono">₹{{ number_format($cGoal) }}</strong></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="p-5 pt-0">
-                        <a href="{{ route('public.fundraising.index') }}#campaign_{{ $cItem->id }}" class="block w-full bg-brandOrange hover:bg-opacity-90 text-white font-bold text-center py-2 px-4 rounded-xl text-xs uppercase tracking-wider transition">
-                            Contribute Now
-                        </a>
-                    </div>
-                </div>
-            @endforeach
-        </div>
-    </div>
-</section>
-@endif
-
-<!-- 5. All Projects Grid Section (Controlled from Database) -->
-<section class="py-16 px-4 bg-gray-50">
+<!-- 4. Our Core Service Projects (Managed from Admin Panel / our_supports) -->
+<section class="py-16 px-4 bg-gray-50 border-t border-gray-100">
     <div class="max-w-6xl mx-auto">
         <div class="text-center mb-12">
-            <h2 class="text-3xl font-extrabold text-brandGray mb-2">Our Core Service Projects</h2>
-            <p class="text-xs text-gray-500">Every project can be customized, added, or modified using the secure Admin Login Panel</p>
+            <span class="text-xs font-bold text-brandOrange uppercase tracking-wider block">Comprehensive Seva Modules</span>
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-brandGray uppercase tracking-tight mt-1">Our Core Service Projects</h2>
+            <p class="text-xs text-gray-500 mt-1">Every project can be customized, added, or modified using the secure Admin Login Panel</p>
             <div class="h-1 w-16 bg-brandOrange mx-auto mt-3"></div>
         </div>
-        
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        @if(isset($projects) && count($projects) > 0)
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 @foreach($projects as $project)
                     <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition flex flex-col justify-between h-full">
                         <div>
@@ -243,18 +182,121 @@
                             </p>
                         </div>
                         
-                                                <!-- Explore Single Core Detail Action Button Fixed Link -->
+                        <!-- Explore Single Core Detail Action Button Fixed Link -->
                         <div class="pt-2 border-t border-gray-50">
                             <a href="{{ route('public.project.show', $project->id) }}" class="text-xs font-black text-brandOrange hover:text-brandGray uppercase tracking-wider inline-flex items-center gap-1 transition">
                                 Explore Project <span class="text-sm">→</span>
                             </a>
                         </div>
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <div class="text-center py-10 bg-white rounded-xl border border-gray-200 p-8 max-w-md mx-auto">
+                <span class="text-3xl block mb-2">🌱</span>
+                <p class="text-xs text-gray-500 font-medium">Core service project records will appear here.</p>
+            </div>
+        @endif
+    </div>
+</section>
 
+<!-- 5. Fundraising Campaigns (Dynamic Admin Fundraising Campaigns) -->
+<section class="py-16 px-4 bg-white border-t border-gray-200">
+    <div class="max-w-6xl mx-auto">
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-10 gap-4">
+            <div>
+                <span class="text-xs font-bold text-brandOrange uppercase tracking-wider block">Dharma Seva Initiatives</span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-brandGray uppercase tracking-tight mt-1">Fundraising Campaigns</h2>
+                <p class="text-xs text-gray-500 mt-1">Support meaningful initiatives and help us serve communities across India.</p>
+                <div class="h-1 w-16 bg-brandOrange mt-3"></div>
+            </div>
+            @if(isset($fundraisingCampaigns) && $fundraisingCampaigns->isNotEmpty())
+                <a href="{{ route('donations.grid') }}" class="bg-brandOrange hover:bg-opacity-90 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow-sm transition uppercase tracking-wider inline-flex items-center gap-1 shrink-0 self-start sm:self-auto">
+                    View All Campaigns →
+                </a>
+            @endif
+        </div>
+
+        @if(isset($fundraisingCampaigns) && $fundraisingCampaigns->isNotEmpty())
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                @foreach($fundraisingCampaigns as $campaign)
+                    @php
+                        $target = $campaign->target_amount ?? 1;
+                        $raised = $campaign->raised_amount ?? 0;
+                        $percent = $target > 0 ? min(round(($raised / $target) * 100, 2), 100) : 0;
+                    @endphp
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col justify-between hover:shadow-md transition">
+                        <div>
+                            <!-- Campaign Image & Badges -->
+                            <div class="aspect-[16/10] w-full bg-gray-100 overflow-hidden relative">
+                                @if(!empty($campaign->cover_image))
+                                    <img src="{{ asset('storage/' . $campaign->cover_image) }}" class="w-full h-full object-cover" alt="{{ $campaign->title }}">
+                                @elseif(!empty($campaign->image_path))
+                                    <img src="{{ asset('storage/' . $campaign->image_path) }}" class="w-full h-full object-cover" alt="{{ $campaign->title }}">
+                                @else
+                                    <div class="w-full h-full flex items-center justify-center text-3xl">🌾</div>
+                                @endif
+                                <span class="absolute top-2.5 left-2.5 bg-brandOrange text-white text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase shadow-xs">
+                                    Active Cause
+                                </span>
+                                @if(!empty($campaign->end_date))
+                                    <span class="absolute top-2.5 right-2.5 bg-black/60 backdrop-blur-xs text-white text-[9px] font-bold px-2 py-0.5 rounded uppercase">
+                                        Ends: {{ \Carbon\Carbon::parse($campaign->end_date)->format('d-M-Y') }}
+                                    </span>
+                                @endif
+                            </div>
+
+                            <!-- Campaign Details -->
+                            <div class="p-5">
+                                <h3 class="font-bold text-sm text-brandGray line-clamp-2 uppercase h-10 mb-2">
+                                    {{ $campaign->title }}
+                                </h3>
+                                <p class="text-xs text-gray-500 line-clamp-2 leading-relaxed mb-4">
+                                    {{ strip_tags($campaign->description ?? '') }}
+                                </p>
+                                
+                                @if(!empty($campaign->video_path))
+                                    <div class="mb-3">
+                                        <span class="inline-flex items-center gap-1 text-[10px] font-bold text-brandOrange bg-orange-50 px-2 py-0.5 rounded border border-orange-200">
+                                            🎥 Video Briefing Available
+                                        </span>
+                                    </div>
+                                @endif
+
+                                <!-- Progress Bar & Amounts -->
+                                <div class="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden mb-2">
+                                    <div class="bg-brandOrange h-full rounded-full transition-all duration-500" style="width: {{ $percent }}%"></div>
+                                </div>
+                                <div class="flex justify-between text-[11px] font-bold text-gray-600">
+                                    <span>Raised: <strong class="text-brandOrange font-mono">₹{{ number_format($raised) }}</strong> ({{ $percent }}%)</span>
+                                    <span>Target: <strong class="text-gray-900 font-mono">₹{{ number_format($target) }}</strong></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action CTA Button & WhatsApp Share -->
+                        <div class="p-5 pt-0 space-y-2">
+                            <div class="grid grid-cols-2 gap-2">
+                                <a href="{{ route('donations.grid') }}#campaign_{{ $campaign->id }}" class="block w-full bg-brandOrange hover:bg-opacity-90 text-white font-bold text-center py-2.5 px-3 rounded-xl text-xs uppercase tracking-wider transition">
+                                    Contribute →
+                                </a>
+                                <a href="{{ $campaign->whatsapp_share_url }}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-1.5 bg-[#25D366] hover:bg-[#20ba59] text-white font-bold text-center py-2.5 px-3 rounded-xl text-xs uppercase tracking-wider shadow-xs transition" aria-label="Share {{ $campaign->title }} on WhatsApp">
+                                    <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.072-2.176-.543-1.894-.787-3.111-2.724-3.206-2.85-.095-.125-.769-1.025-.769-1.954 0-.93.486-1.385.66-1.575.174-.189.38-.238.508-.238.127 0 .253.002.364.007.117.006.275-.044.429.327.16.386.547 1.332.595 1.43.048.098.08.213.016.338-.064.126-.096.205-.19.316-.095.111-.2.247-.286.332-.095.095-.194.198-.083.389.111.19.493.814 1.057 1.317.725.646 1.337.846 1.528.941.19.095.302.08.413-.048.111-.127.476-.556.603-.746.127-.19.254-.158.428-.095.175.063 1.111.524 1.301.62.19.095.317.143.365.222.048.079.048.46-.096.865z"/></svg>
+                                    <span>Share</span>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 @endforeach
             </div>
-
+        @else
+            <!-- Clean Empty State -->
+            <div class="text-center py-12 bg-gray-50 rounded-2xl border border-gray-200 p-8 max-w-md mx-auto">
+                <span class="text-3xl block mb-2">🕉️</span>
+                <h3 class="text-sm font-bold text-gray-700 uppercase">Fundraising Campaigns</h3>
+                <p class="text-xs text-gray-500 mt-1">No active fundraising campaigns at the moment.</p>
+            </div>
+        @endif
     </div>
 </section>
 

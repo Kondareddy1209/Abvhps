@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('title', 'Rudra Sena Dal Sacred Registration | ABVHPS')
+@section('meta_description', 'Register for Rudra Sena, the youth volunteer brigade dedicated to the protection of Hindu temples, cultural traditions, and dharma.')
+
 @section('content')
 <div class="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 py-10 px-4 sm:px-6 lg:px-8">
     <div class="max-w-4xl mx-auto">

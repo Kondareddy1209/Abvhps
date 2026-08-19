@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('title', 'Page Not Found (404) | ABVHPS')
+@section('meta_robots', 'noindex, nofollow')
+
 @section('content')
 <section class="min-h-[70vh] flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full text-center space-y-6 bg-white p-8 rounded-2xl shadow-sm border border-gray-200">

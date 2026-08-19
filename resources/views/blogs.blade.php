@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('title', 'Dharma Vani Articles & Updates | ABVHPS')
+@section('meta_description', 'Read insightful articles, announcements, and spiritual reflections on Sanatana Dharma from ABVHPS scholars and seva workers.')
+
 @section('content')
 <!-- Public Website Blogs Page Header Banner with Dynamic Admin Management -->
 <x-page-banner 

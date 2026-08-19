@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('title', 'Volunteer Registration & Cadre Application | ABVHPS')
+@section('meta_description', 'Apply to become an active ABVHPS Seva Volunteer across village, mandal, assembly, and district levels.')
+
 @section('content')
 <section class="min-h-[500px] flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow border border-gray-100">

@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('title', 'Grama Seva Dal Youth Network | ABVHPS')
+@section('meta_description', 'Join Grama Seva Dal to serve local village communities through cleanliness drives, education, and village temple care.')
+
 @section('content')
  <!-- Fixed Layer Flow Container mapping directly below the Master Menu Bar -->
   <div class="relative max-w-5xl mx-auto py-10 px-4 sm:px-6 lg:px-8 z-10">

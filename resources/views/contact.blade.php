@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('title', 'Contact Us | ABVHPS')
+@section('meta_description', 'Get in touch with the Akhanda Bharatha Viswa Hindu Parirakshana Samiti central office for memberships, donations, or seva inquiries.')
+
 @section('content')
 <div class="bg-gray-50 min-h-screen py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-7xl mx-auto space-y-12">

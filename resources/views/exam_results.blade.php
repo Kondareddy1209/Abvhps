@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Official Examination Results | ABVHPS')
+@section('meta_description', 'Official portal to check and download published ABVHPS Dharma Vignana Pariksha exam results and scores.')
 
 @section('content')
 <div class="bg-slate-50 min-h-[75vh] pb-16">

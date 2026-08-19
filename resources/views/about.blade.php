@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('title', 'About Us | ABVHPS')
+@section('meta_description', 'Learn about the divine origin, vision, and mission of Akhanda Bharatha Viswa Hindu Parirakshana Samiti founded under the guidance of Sri Sri Sri Subrahmanneswara Swamy Garu.')
+
 @section('content')
 <!-- 1. Hero / Page Banner Section -->
 <x-page-banner 

@@ -16,16 +16,13 @@ class FundraisingController extends Controller
      */
     public function showDonationsGrid()
     {
-        $campaigns = FundraisingCampaign::where('status', 'active')
-            ->where('end_date', '>=', Carbon::today()->toDateString())
+        $campaigns = FundraisingCampaign::active()
             ->orderBy('id', 'desc')
             ->get();
 
         foreach ($campaigns as $campaign) {
-            $campaignUrl = route('donations.grid') . '#campaign_' . $campaign->id;
-            $shareText = rawurlencode("🔱 Support ABVHPS Cause: " . $campaign->title . " . Click here to contribute: ");
-            $campaign->whatsapp_share = "https://whatsapp.com" . $shareText . rawurlencode($campaignUrl);
-            $campaign->facebook_share = "https://facebook.com" . rawurlencode($campaignUrl);
+            $campaign->whatsapp_share = $campaign->whatsapp_share_url;
+            $campaign->facebook_share = $campaign->facebook_share_url;
         }
 
         return view('donations_grid', compact('campaigns'));
