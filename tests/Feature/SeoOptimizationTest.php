@@ -128,7 +128,7 @@ class SeoOptimizationTest extends TestCase
         $this->assertStringContainsString('/compliance-certificates</loc>', $content);
 
         // Dynamic campaign and project entries must be present
-        $this->assertStringContainsString('#campaign_' . $campaign->id, $content);
+        $this->assertStringContainsString('/donations/campaign/' . $campaign->id, $content);
         $this->assertStringContainsString('/project/' . $project->id, $content);
 
         // Sensitive/admin routes MUST NOT be in sitemap

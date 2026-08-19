@@ -158,6 +158,7 @@ Route::post('/organic-farmers-apply/submit', [OrganicFarmerController::class, 's
 
 // Central Multimedia Fundraising Campaign Pipelines
 Route::get('/donations', [FundraisingController::class, 'showDonationsGrid'])->name('donations.grid');
+Route::get('/donations/campaign/{id}', [FundraisingController::class, 'showCampaign'])->name('donations.campaign');
 Route::get('/admin/fundraising/create', [FundraisingController::class, 'showCreateForm'])->name('admin.fundraising.create');
 Route::post('/admin/fundraising/store', [FundraisingController::class, 'storeCampaignPacket'])->name('admin.fundraising.store');
 

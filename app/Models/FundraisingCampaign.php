@@ -38,25 +38,78 @@ class FundraisingCampaign extends Model
         return 0;
     }
 
-    public function getPublicUrlAttribute(): string
+    /**
+     * Format numbers into Indian numbering style (e.g. ₹50,00,000 / ₹1,00,000 / ₹5,000)
+     */
+    public static function formatIndianCurrency(float|int|string|null $number): string
     {
-        return route('donations.grid') . '#campaign_' . $this->id;
+        $num = (int) round((float) ($number ?? 0));
+        if ($num === 0) {
+            return '₹0';
+        }
+        $isNegative = $num < 0;
+        $num = abs($num);
+        $numStr = (string) $num;
+        if (strlen($numStr) <= 3) {
+            $formatted = $numStr;
+        } else {
+            $last3 = substr($numStr, -3);
+            $rest = substr($numStr, 0, -3);
+            $restFormatted = preg_replace("/\B(?=(\d{2})+(?!\d))/", ",", $rest);
+            $formatted = $restFormatted . ',' . $last3;
+        }
+        return ($isNegative ? '-₹' : '₹') . $formatted;
     }
 
     /**
-     * Generate universal WhatsApp sharing URL with dynamic campaign details and canonical URL
+     * Get publicly accessible HTTPS image URL for Open Graph / Social previews
+     */
+    public function getPublicImageUrlAttribute(): string
+    {
+        if (!empty($this->cover_image)) {
+            if (\Illuminate\Support\Str::startsWith($this->cover_image, ['http://', 'https://'])) {
+                return $this->cover_image;
+            }
+            return asset('storage/' . $this->cover_image);
+        }
+        return asset('images/ABVHPS_LOGO.jpg');
+    }
+
+    /**
+     * Canonical crawler-friendly public campaign URL
+     */
+    public function getPublicUrlAttribute(): string
+    {
+        return route('donations.campaign', $this->id);
+    }
+
+    /**
+     * Generate professional WhatsApp sharing URL with dynamic campaign details and Indian currency formatting
      */
     public function getWhatsappShareUrlAttribute(): string
     {
         $campaignUrl = $this->public_url;
-        $cleanDesc = \Illuminate\Support\Str::limit(strip_tags($this->description ?? ''), 120);
+        $cleanTitle = trim($this->title);
+        $cleanDesc = trim(strip_tags($this->description ?? ''));
+        if ($cleanDesc) {
+            $cleanDesc = \Illuminate\Support\Str::limit($cleanDesc, 140);
+        }
 
-        $message = "🔱 Support ABVHPS Cause:\n\n"
-            . "*" . trim($this->title) . "*\n\n"
+        $targetFormatted = self::formatIndianCurrency($this->target_amount);
+        $raisedFormatted = self::formatIndianCurrency($this->raised_amount);
+        $percent = $this->progress_percent;
+        $percentFormatted = (floor($percent) == $percent) ? number_format($percent, 0) : number_format($percent, 1);
+
+        $message = "🙏 SUPPORT ABVHPS\n\n"
+            . "🌺 *" . $cleanTitle . "*\n\n"
             . ($cleanDesc ? $cleanDesc . "\n\n" : "")
-            . "🎯 Target: ₹" . number_format($this->target_amount) . " | Raised: ₹" . number_format($this->raised_amount) . " (" . $this->progress_percent . "%)\n\n"
-            . "👉 Click here to contribute:\n" . $campaignUrl . "\n\n"
-            . "Help us preserve Sanatana Dharma and empower communities across India.";
+            . "🎯 Target: " . $targetFormatted . "\n"
+            . "💰 Raised: " . $raisedFormatted . "\n"
+            . "📊 Progress: " . $percentFormatted . "%\n\n"
+            . "🔗 Support this campaign:\n"
+            . $campaignUrl . "\n\n"
+            . "Every contribution helps us continue our service activities.\n\n"
+            . "🙏 Join us in supporting this cause.";
 
         return "https://wa.me/?text=" . rawurlencode($message);
     }

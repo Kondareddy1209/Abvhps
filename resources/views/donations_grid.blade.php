@@ -1,7 +1,24 @@
 @extends('layouts.app')
+@php
+    $isFeatured = isset($featuredCampaign) && $featuredCampaign;
+@endphp
 
-@section('title', 'Dharma Seva Fundraising Campaigns | ABVHPS')
-@section('meta_description', 'Support active ABVHPS fundraising initiatives for temple construction, goshala developments, and sacred deity consecration across India.')
+@if($isFeatured)
+    @section('title', 'ABVHPS — ' . $featuredCampaign->title)
+    @section('meta_description', \Illuminate\Support\Str::limit(strip_tags($featuredCampaign->description ?? 'Support ' . $featuredCampaign->title . ' under ABVHPS.'), 150))
+    @section('canonical_url', $featuredCampaign->public_url)
+    @section('og_title', 'ABVHPS — ' . $featuredCampaign->title)
+    @section('og_description', \Illuminate\Support\Str::limit(strip_tags($featuredCampaign->description ?? 'Support this ABVHPS fundraising campaign.'), 150))
+    @section('og_url', $featuredCampaign->public_url)
+    @section('og_image', $featuredCampaign->public_image_url)
+    @section('twitter_card', 'summary_large_image')
+    @section('twitter_title', 'ABVHPS — ' . $featuredCampaign->title)
+    @section('twitter_description', \Illuminate\Support\Str::limit(strip_tags($featuredCampaign->description ?? 'Support this ABVHPS fundraising campaign.'), 150))
+    @section('twitter_image', $featuredCampaign->public_image_url)
+@else
+    @section('title', 'Dharma Seva Fundraising Campaigns | ABVHPS')
+    @section('meta_description', 'Support active ABVHPS fundraising initiatives for temple construction, goshala developments, and sacred deity consecration across India.')
+@endif
 
 @section('content')
 <div class="bg-gray-50 min-h-screen pb-16">
@@ -67,7 +84,7 @@
         
         @forelse($campaigns as $campaign)
             <!-- INDIVIDUAL CAMPAIGN SECURED CARD NODE -->
-            <div id="campaign_{{ $campaign->id }}" class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden flex flex-col justify-between transform hover:scale-[1.01] transition-all duration-300">
+            <div id="campaign_{{ $campaign->id }}" class="bg-white rounded-2xl shadow-lg border @if(isset($featuredCampaign) && $featuredCampaign && $featuredCampaign->id === $campaign->id) border-brandOrange ring-2 ring-brandOrange/40 @else border-gray-100 @endif overflow-hidden flex flex-col justify-between transform hover:scale-[1.01] transition-all duration-300">
                 
                 <div>
                     <!-- Header Context Meta Badge Structure -->
@@ -94,19 +111,19 @@
                         <div class="relative w-full h-48 bg-gray-100 rounded-xl overflow-hidden border border-gray-200 group/slider shadow-inner">
                             <div class="absolute inset-0 flex transition-transform duration-500 ease-in-out" id="carousel_track_{{ $campaign->id }}">
                                 <div class="w-full h-full flex-shrink-0">
-                                    <img src="{{ asset('storage/' . $campaign->cover_image) }}" class="w-full h-full object-cover">
+                                    <img src="{{ asset('storage/' . $campaign->cover_image) }}" class="w-full h-full object-cover" alt="{{ $campaign->title }}">
                                 </div>
                                 @if($campaign->image_1)
-                                    <div class="w-full h-full flex-shrink-0"><img src="{{ asset('storage/' . $campaign->image_1) }}" class="w-full h-full object-cover"></div>
+                                    <div class="w-full h-full flex-shrink-0"><img src="{{ asset('storage/' . $campaign->image_1) }}" class="w-full h-full object-cover" alt="{{ $campaign->title }} Image 1"></div>
                                 @endif
                                 @if($campaign->image_2)
-                                    <div class="w-full h-full flex-shrink-0"><img src="{{ asset('storage/' . $campaign->image_2) }}" class="w-full h-full object-cover"></div>
+                                    <div class="w-full h-full flex-shrink-0"><img src="{{ asset('storage/' . $campaign->image_2) }}" class="w-full h-full object-cover" alt="{{ $campaign->title }} Image 2"></div>
                                 @endif
                                 @if($campaign->image_3)
-                                    <div class="w-full h-full flex-shrink-0"><img src="{{ asset('storage/' . $campaign->image_3) }}" class="w-full h-full object-cover"></div>
+                                    <div class="w-full h-full flex-shrink-0"><img src="{{ asset('storage/' . $campaign->image_3) }}" class="w-full h-full object-cover" alt="{{ $campaign->title }} Image 3"></div>
                                 @endif
                                 @if($campaign->image_4)
-                                    <div class="w-full h-full flex-shrink-0"><img src="{{ asset('storage/' . $campaign->image_4) }}" class="w-full h-full object-cover"></div>
+                                    <div class="w-full h-full flex-shrink-0"><img src="{{ asset('storage/' . $campaign->image_4) }}" class="w-full h-full object-cover" alt="{{ $campaign->title }} Image 4"></div>
                                 @endif
                             </div>
                             <!-- Slider Arrow Anchors Desktop Indicators -->
@@ -152,11 +169,11 @@
                         <div class="grid grid-cols-2 gap-2 text-left pt-1">
                             <div class="border-r border-gray-200/80 pr-2">
                                 <span class="text-[9px] font-black text-gray-400 uppercase tracking-wider block">Raised Amount</span>
-                                <span class="text-xs md:text-sm font-black font-mono text-emerald-600">₹{{ number_format($campaign->raised_amount, 2) }}</span>
+                                <span class="text-xs md:text-sm font-black font-mono text-emerald-600">{{ \App\Models\FundraisingCampaign::formatIndianCurrency($campaign->raised_amount) }}</span>
                             </div>
                             <div class="pl-2">
-                                <span class="text-[9px] font-black text-gray-400 uppercase tracking-wider block">Target Budget Target</span>
-                                <span class="text-xs md:text-sm font-black font-mono text-brandGray">₹{{ number_format($campaign->target_amount, 2) }}</span>
+                                <span class="text-[9px] font-black text-gray-400 uppercase tracking-wider block">Target Budget</span>
+                                <span class="text-xs md:text-sm font-black font-mono text-brandGray">{{ \App\Models\FundraisingCampaign::formatIndianCurrency($campaign->target_amount) }}</span>
                             </div>
                         </div>
                     </div>
@@ -198,7 +215,7 @@
 </div>
 
 <!-- ====================================================================== -->
-<!-- JAVASCRIPT IMAGE CAROUSEL MULTI-SLIDER ENGINE CONTROLLER -->
+<!-- JAVASCRIPT IMAGE CAROUSEL MULTI-SLIDER & AUTO-SCROLL ENGINE -->
 <!-- ====================================================================== -->
 <script>
     // Local session map matrix memory to keep distinct index positioning tracking flags for each campaign slider block
@@ -232,5 +249,17 @@
         const translatedPercentageShift = currentActiveIndex * 100;
         track.style.transform = `translateX(-${translatedPercentageShift}%)`;
     }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const featuredId = @json(isset($featuredCampaign) && $featuredCampaign ? $featuredCampaign->id : null);
+        if (featuredId) {
+            const el = document.getElementById('campaign_' + featuredId);
+            if (el) {
+                setTimeout(() => {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 300);
+            }
+        }
+    });
 </script>
 @endsection
