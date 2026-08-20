@@ -91,7 +91,7 @@ return new class extends Migration
         if (Schema::hasTable('organic_farmers')) {
             Schema::table('organic_farmers', function (Blueprint $table) {
                 if (!Schema::hasColumn('organic_farmers', 'status')) {
-                    $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending')->after('bank_name_branch');
+                    $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
                 }
                 if (!Schema::hasColumn('organic_farmers', 'approved_by_volunteer_id')) {
                     $table->unsignedBigInteger('approved_by_volunteer_id')->nullable()->after('status');
