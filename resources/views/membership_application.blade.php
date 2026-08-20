@@ -24,28 +24,36 @@
                 <span class="text-sm font-bold text-brandGray">+91 {{ $phone }}</span>
             </div>
         </div>
-        <!-- Section A: Aadhaar Verification Desk with Correct Trigger Mapping -->
+        <!-- Section A: Aadhaar & Name Verification Desk -->
         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-4">
-            <h3 class="text-xs font-bold text-brandGray uppercase tracking-wider border-b border-gray-200 pb-2">Section A: Aadhaar Verification</h3>
+            <h3 class="text-xs font-bold text-brandGray uppercase tracking-wider border-b border-gray-200 pb-2">Section A: Aadhaar & Name Verification</h3>
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                <div class="md:col-span-2">
-                    <label for="aadhaar_number" class="block text-xs font-bold text-brandGray uppercase mb-1">Aadhaar Number</label>
-                    <input type="text" id="aadhaar_number" name="aadhaar_number" maxlength="12" required
-                        value="{{ old('aadhaar_number', $member->aadhaar_number ?? '') }}"
-                        class="block w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-semibold tracking-widest text-brandGray focus:ring-brandOrange focus:border-brandOrange"
-                        placeholder="Enter 12 Digit Aadhaar Number">
+            <!-- Dynamic State Banners -->
+            <div id="aadhaar_success_box" class="hidden p-4 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-800">
+                <div class="flex items-center space-x-2 font-bold text-sm">
+                    <span class="text-emerald-600 text-base font-extrabold">✓</span>
+                    <span class="tracking-wide">AADHAAR & NAME VERIFIED</span>
                 </div>
-                <div>
-                    <!-- Verification Trigger mapped to real backend endpoint -->
-                    <button type="button" id="btn_verify_aadhaar" onclick="executeAadhaarVerification()"
-                        class="w-full py-2 px-4 border border-transparent text-sm font-bold rounded-md text-white bg-brandOrange hover:bg-opacity-90 transition shadow-sm cursor-pointer">
-                        Verify via OTP
-                    </button>
-                </div>
+                <p class="text-xs text-emerald-700 mt-1 font-medium">Name matched with Aadhaar records. Identity data populated automatically.</p>
             </div>
 
-            <!-- Aadhaar Auto-fill Row 1: Name and Father/Husband Name -->
+            <div id="aadhaar_mismatch_box" class="hidden p-4 rounded-lg bg-rose-50 border border-rose-300 text-rose-800">
+                <div class="flex items-center space-x-2 font-bold text-sm">
+                    <span class="text-rose-600 text-base font-extrabold">✕</span>
+                    <span class="tracking-wide">NAME DOES NOT MATCH</span>
+                </div>
+                <p class="text-xs text-rose-700 mt-1 font-medium">The name entered does not match the Aadhaar verification record. Please check the spelling or enter the exact name as printed on your Aadhaar card.</p>
+            </div>
+
+            <div id="aadhaar_error_box" class="hidden p-4 rounded-lg bg-amber-50 border border-amber-300 text-amber-800">
+                <div class="flex items-center space-x-2 font-bold text-sm">
+                    <span class="text-amber-600 text-base font-extrabold">⚠️</span>
+                    <span id="aadhaar_error_title" class="tracking-wide">VERIFICATION FAILED</span>
+                </div>
+                <p id="aadhaar_error_msg" class="text-xs text-amber-700 mt-1 font-medium">Aadhaar verification failed. Please check the Aadhaar number and try again.</p>
+            </div>
+
+            <!-- Aadhaar & Name Input Row -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label for="full_name" class="block text-xs font-bold text-brandGray uppercase mb-1">Full Name (As per Aadhaar) *</label>
@@ -55,15 +63,31 @@
                         placeholder="Enter Full Name (As per Aadhaar)">
                 </div>
                 <div>
+                    <label for="aadhaar_number" class="block text-xs font-bold text-brandGray uppercase mb-1">Aadhaar Number *</label>
+                    <input type="text" id="aadhaar_number" name="aadhaar_number" maxlength="12" required
+                        value="{{ old('aadhaar_number', $member->aadhaar_number ?? '') }}"
+                        class="block w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-semibold tracking-widest text-brandGray focus:ring-brandOrange focus:border-brandOrange"
+                        placeholder="Enter 12 Digit Aadhaar Number">
+                </div>
+            </div>
+
+            <!-- Verification Action Trigger Button -->
+            <div>
+                <button type="button" id="btn_verify_aadhaar" onclick="executeAadhaarVerification()"
+                    class="w-full py-2.5 px-4 border border-transparent text-sm font-bold rounded-md text-white bg-brandOrange hover:bg-opacity-90 transition shadow-sm cursor-pointer flex items-center justify-center space-x-2">
+                    <span id="btn_verify_text">Verify Aadhaar & Name</span>
+                </button>
+            </div>
+
+            <!-- Aadhaar Auto-fill Row 1: Father/Husband Name, DOB, Gender -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t border-gray-200">
+                <div>
                     <label for="father_or_husband_name" class="block text-xs font-bold text-brandGray uppercase mb-1">Father / Husband Name *</label>
                     <input type="text" id="father_or_husband_name" name="father_or_husband_name" required
                         value="{{ old('father_or_husband_name', $member->father_or_husband_name ?? '') }}"
                         class="block w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-semibold text-brandGray focus:ring-brandOrange focus:border-brandOrange"
                         placeholder="Enter Father or Husband Name">
                 </div>
-            </div>
-            <!-- Aadhaar / Personal Info Row 2: DOB and Gender -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label for="dob" class="block text-xs font-bold text-brandGray uppercase mb-1">Date of Birth *</label>
                     <input type="date" id="dob" name="dob" required
@@ -353,25 +377,68 @@
     }
 
     // Dynamic Aadhaar Verification Engine connected directly to Backend Pipeline
+    // Cashfree Secure ID Aadhaar & Name Verification Engine
     async function executeAadhaarVerification() {
+        const nameInput = document.getElementById('full_name');
         const aadhaarInput = document.getElementById('aadhaar_number');
+        
+        const fullNameValue = nameInput ? nameInput.value.trim() : '';
         const aadhaarValue = aadhaarInput ? aadhaarInput.value.trim() : '';
 
+        // Reset state banners
+        const successBox = document.getElementById('aadhaar_success_box');
+        const mismatchBox = document.getElementById('aadhaar_mismatch_box');
+        const errorBox = document.getElementById('aadhaar_error_box');
+        const errorMsg = document.getElementById('aadhaar_error_msg');
+
+        if (successBox) successBox.classList.add('hidden');
+        if (mismatchBox) mismatchBox.classList.add('hidden');
+        if (errorBox) errorBox.classList.add('hidden');
+
+        if (!fullNameValue || fullNameValue.length < 2) {
+            if (errorBox && errorMsg) {
+                errorMsg.innerText = "Please enter your Full Name (as per Aadhaar) before verifying.";
+                errorBox.classList.remove('hidden');
+            } else {
+                alert("Please enter your Full Name (as per Aadhaar) before verifying.");
+            }
+            if (nameInput) nameInput.focus();
+            return;
+        }
+
         if (!aadhaarValue || aadhaarValue.length !== 12 || !/^\d{12}$/.test(aadhaarValue)) {
-            alert("Please enter a valid 12-digit Aadhaar Number first.");
+            if (errorBox && errorMsg) {
+                errorMsg.innerText = "Please enter a valid 12-digit Aadhaar Number.";
+                errorBox.classList.remove('hidden');
+            } else {
+                alert("Please enter a valid 12-digit Aadhaar Number.");
+            }
+            if (aadhaarInput) aadhaarInput.focus();
             return;
         }
 
         if (aadhaarValue[0] === '0' || aadhaarValue[0] === '1') {
-            alert("Invalid Aadhaar number format. Aadhaar numbers cannot start with 0 or 1.");
+            if (errorBox && errorMsg) {
+                errorMsg.innerText = "Invalid Aadhaar number format. Aadhaar numbers cannot start with 0 or 1.";
+                errorBox.classList.remove('hidden');
+            } else {
+                alert("Invalid Aadhaar number format. Aadhaar numbers cannot start with 0 or 1.");
+            }
             return;
         }
 
         const btn = document.getElementById('btn_verify_aadhaar');
+        const btnText = document.getElementById('btn_verify_text') || btn;
+
         if (btn) {
             btn.disabled = true;
-            btn.innerText = "Verifying...";
+            btnText.innerText = "Verifying with Cashfree Secure ID...";
         }
+
+        const payload = {
+            aadhaar_number: aadhaarValue,
+            full_name: fullNameValue
+        };
 
         try {
             const response = await fetch("{{ url('/membership/verify-aadhaar') }}", {
@@ -381,51 +448,92 @@
                     "X-CSRF-TOKEN": "{{ csrf_token() }}",
                     "Accept": "application/json"
                 },
-                body: JSON.stringify({
-                    aadhaar_number: aadhaarValue
-                })
+                body: JSON.stringify(payload)
             });
 
             const result = await response.json();
+            console.log('Cashfree Secure ID response status:', result.status, 'Name matched:', result.is_name_matched);
 
-            if (response.ok && result.status === 'success') {
-                // Populate verified applicant fields only if returned from verification record
+            if (result.status === 'success' && result.is_name_matched === true) {
+                // 1. SUCCESS: Aadhaar and Name verified
+                if (successBox) successBox.classList.remove('hidden');
+
+                // Authoritative Cashfree verified name populated directly from backend
+                const authoritativeName = result.verified_name || (result.data ? result.data.full_name : null);
+                if (authoritativeName && nameInput) {
+                    nameInput.value = authoritativeName;
+                }
+
+                // Populate demographic fields automatically
                 if (result.data) {
-                    if (result.data.full_name) {
-                        const nameField = document.getElementById('full_name');
-                        nameField.value = result.data.full_name;
-                    }
-                    if (result.data.dob) {
+                    if (result.data.dob && document.getElementById('dob')) {
                         document.getElementById('dob').value = result.data.dob;
                     }
-                    if (result.data.gender) {
+                    if (result.data.gender && document.getElementById('gender')) {
                         document.getElementById('gender').value = result.data.gender;
                     }
-                    if (result.data.permanent_address) {
-                        document.getElementById('permanent_address').value = result.data.permanent_address;
-                    }
-                    if (result.data.father_or_husband_name) {
+                    if (result.data.father_or_husband_name && document.getElementById('father_or_husband_name')) {
                         document.getElementById('father_or_husband_name').value = result.data.father_or_husband_name;
                     }
-                } else {
-                    // No existing data, focus applicant name field for actual name entry
-                    const nameField = document.getElementById('full_name');
-                    if (!nameField.value) {
-                        nameField.focus();
+                    if (result.data.permanent_address && document.getElementById('permanent_address')) {
+                        document.getElementById('permanent_address').value = result.data.permanent_address;
+                    }
+                    if (result.data.pincode && document.getElementById('pincode')) {
+                        document.getElementById('pincode').value = result.data.pincode;
+                    }
+                    if (result.data.district && document.getElementById('district')) {
+                        document.getElementById('district').value = result.data.district;
+                    }
+                    if (result.data.state && document.getElementById('state')) {
+                        document.getElementById('state').value = result.data.state;
                     }
                 }
 
-                alert("✅ " + (result.message || "Aadhaar Identity Authenticated Successfully!"));
+                if (btn) {
+                    btn.classList.remove('bg-brandOrange', 'hover:bg-opacity-90');
+                    btn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+                    btnText.innerText = "✓ Aadhaar & Name Verified";
+                }
+            } else if (result.is_name_matched === false) {
+                // 2. NAME MISMATCH: Aadhaar verified, but user name did not match
+                if (mismatchBox) mismatchBox.classList.remove('hidden');
+
+                if (btn) {
+                    btn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+                    btn.classList.add('bg-brandOrange', 'hover:bg-opacity-90');
+                    btnText.innerText = "Verify Aadhaar & Name";
+                }
             } else {
-                alert("❌ Verification Failed: " + (result.message || "Invalid Aadhaar details. Please check and try again."));
+                // 3. AADHAAR VERIFICATION FAILURE / GATEWAY ERROR
+                if (errorBox && errorMsg) {
+                    errorMsg.innerText = result.message || "Aadhaar verification failed. Please check the Aadhaar number and try again.";
+                    errorBox.classList.remove('hidden');
+                } else {
+                    alert("❌ Verification Failed: " + (result.message || "Invalid Aadhaar details."));
+                }
+
+                if (btn) {
+                    btn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+                    btn.classList.add('bg-brandOrange', 'hover:bg-opacity-90');
+                    btnText.innerText = "Verify Aadhaar & Name";
+                }
             }
         } catch (error) {
-            console.error("Aadhaar verification error:", error);
-            alert("Network error during Aadhaar verification. Please try again.");
+            console.error("Cashfree Secure ID verification error:", error);
+            if (errorBox && errorMsg) {
+                errorMsg.innerText = "Network error during Aadhaar verification. Please check your connection and try again.";
+                errorBox.classList.remove('hidden');
+            } else {
+                alert("Network error during Aadhaar verification. Please try again.");
+            }
+            if (btn) {
+                btn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+                btn.classList.add('bg-brandOrange', 'hover:bg-opacity-90');
+                btnText.innerText = "Verify Aadhaar & Name";
+            }
         } finally {
             if (btn) {
                 btn.disabled = false;
-                btn.innerText = "Verify via OTP";
             }
         }
     }

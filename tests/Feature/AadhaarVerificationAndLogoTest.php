@@ -11,6 +11,15 @@ class AadhaarVerificationAndLogoTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        \Illuminate\Support\Facades\Config::set('services.cashfree.verify_client_id', 'CF_TEST_ID');
+        \Illuminate\Support\Facades\Config::set('services.cashfree.verify_client_secret', 'CF_TEST_SECRET');
+        \Illuminate\Support\Facades\Config::set('services.cashfree.verification_base_url', 'https://sandbox.cashfree.com/verification');
+    }
+
     /**
      * Test: Membership verification page uses official logo and no lotus emoji (🪷).
      */
@@ -57,32 +66,42 @@ class AadhaarVerificationAndLogoTest extends TestCase
      */
     public function test_case_1_verify_applicant_a_returns_actual_verified_data(): void
     {
+        \Illuminate\Support\Facades\Http::fake([
+            'https://sandbox.cashfree.com/verification/*' => \Illuminate\Support\Facades\Http::response([
+                'status'  => 'SUCCESS',
+                'name'    => 'RAHUL SHARMA',
+                'dob'     => '1995-05-15',
+                'gender'  => 'M',
+                'care_of' => 'Suresh Sharma',
+                'address' => 'House 123, Gandhi Nagar, Kadapa',
+            ], 200),
+        ]);
+
+        \Illuminate\Support\Facades\Config::set('services.cashfree.verify_client_id', 'CF_TEST_ID');
+        \Illuminate\Support\Facades\Config::set('services.cashfree.verify_client_secret', 'CF_TEST_SECRET');
+
         $applicantA = Membership::create([
-            'membership_id' => '111122223333',
-            'phone' => '9111111111',
+            'membership_id'  => '111122223333',
+            'phone'          => '9111111111',
             'payment_status' => 'success',
-            'aadhaar_number' => '444455556666',
-            'full_name' => 'RAHUL SHARMA',
-            'dob' => '1995-05-15',
-            'gender' => 'Male',
-            'father_or_husband_name' => 'Suresh Sharma',
-            'permanent_address' => 'House 123, Gandhi Nagar, Kadapa',
-            'is_completed' => 1
+            'is_completed'   => 1
         ]);
 
         $response = $this->withSession(['verified_membership_phone' => '9111111111'])
             ->postJson('/membership/verify-aadhaar', [
-                'aadhaar_number' => '444455556666'
+                'aadhaar_number' => '444455556666',
+                'full_name'      => 'RAHUL SHARMA',
             ]);
 
         $response->assertStatus(200);
         $response->assertJson([
-            'status' => 'success',
+            'status'          => 'success',
+            'is_name_matched' => true,
             'data' => [
-                'full_name' => 'RAHUL SHARMA',
-                'dob' => '1995-05-15',
-                'gender' => 'Male',
-                'permanent_address' => 'House 123, Gandhi Nagar, Kadapa',
+                'full_name'              => 'RAHUL SHARMA',
+                'dob'                    => '1995-05-15',
+                'gender'                 => 'Male',
+                'permanent_address'      => 'House 123, Gandhi Nagar, Kadapa',
                 'father_or_husband_name' => 'Suresh Sharma'
             ]
         ]);
@@ -94,32 +113,42 @@ class AadhaarVerificationAndLogoTest extends TestCase
      */
     public function test_case_2_verify_applicant_b_returns_actual_verified_data(): void
     {
+        \Illuminate\Support\Facades\Http::fake([
+            'https://sandbox.cashfree.com/verification/*' => \Illuminate\Support\Facades\Http::response([
+                'status'  => 'SUCCESS',
+                'name'    => 'PRIYA VENKATESH',
+                'dob'     => '1998-11-20',
+                'gender'  => 'F',
+                'care_of' => 'Venkatesh Babu',
+                'address' => 'Flat 401, Tirupati Heights, Tirupati',
+            ], 200),
+        ]);
+
+        \Illuminate\Support\Facades\Config::set('services.cashfree.verify_client_id', 'CF_TEST_ID');
+        \Illuminate\Support\Facades\Config::set('services.cashfree.verify_client_secret', 'CF_TEST_SECRET');
+
         $applicantB = Membership::create([
-            'membership_id' => '999988887777',
-            'phone' => '9222222222',
+            'membership_id'  => '999988887777',
+            'phone'          => '9222222222',
             'payment_status' => 'success',
-            'aadhaar_number' => '777788889999',
-            'full_name' => 'PRIYA VENKATESH',
-            'dob' => '1998-11-20',
-            'gender' => 'Female',
-            'father_or_husband_name' => 'Venkatesh Babu',
-            'permanent_address' => 'Flat 401, Tirupati Heights, Tirupati',
-            'is_completed' => 1
+            'is_completed'   => 1
         ]);
 
         $response = $this->withSession(['verified_membership_phone' => '9222222222'])
             ->postJson('/membership/verify-aadhaar', [
-                'aadhaar_number' => '777788889999'
+                'aadhaar_number' => '777788889999',
+                'full_name'      => 'Priya Venkatesh',
             ]);
 
         $response->assertStatus(200);
         $response->assertJson([
-            'status' => 'success',
+            'status'          => 'success',
+            'is_name_matched' => true,
             'data' => [
-                'full_name' => 'PRIYA VENKATESH',
-                'dob' => '1998-11-20',
-                'gender' => 'Female',
-                'permanent_address' => 'Flat 401, Tirupati Heights, Tirupati',
+                'full_name'              => 'PRIYA VENKATESH',
+                'dob'                    => '1998-11-20',
+                'gender'                 => 'Female',
+                'permanent_address'      => 'Flat 401, Tirupati Heights, Tirupati',
                 'father_or_husband_name' => 'Venkatesh Babu'
             ]
         ]);
@@ -134,7 +163,8 @@ class AadhaarVerificationAndLogoTest extends TestCase
         // Invalid Aadhaar (e.g. less than 12 digits or starts with 0)
         $response = $this->withSession(['verified_membership_phone' => '9333333333'])
             ->postJson('/membership/verify-aadhaar', [
-                'aadhaar_number' => '012345678901'
+                'aadhaar_number' => '012345678901',
+                'full_name'      => 'Test User',
             ]);
 
         $response->assertStatus(422);
@@ -193,5 +223,82 @@ class AadhaarVerificationAndLogoTest extends TestCase
         $responseB->assertSee('APPLICANT B PERSON');
         $responseB->assertDontSee('APPLICANT A PERSON');
         $responseB->assertDontSee('SRINIVASA RAO');
+    }
+
+    /**
+     * Test CASE 6: Successful Aadhaar verification updates and persists data to database.
+     */
+    public function test_case_6_successful_aadhaar_verification_persists_data_to_database(): void
+    {
+        \Illuminate\Support\Facades\Http::fake([
+            'https://sandbox.cashfree.com/verification/*' => \Illuminate\Support\Facades\Http::response([
+                'status'        => 'SUCCESS',
+                'name'          => 'KAVITHA REDDY',
+                'gender'        => 'Female',
+                'dob'           => '1992-08-20',
+                'care_of'       => 'Venkata Reddy',
+                'address'       => 'Plot 45, Akkalareddypalli, Porumamilla',
+                'split_address' => [
+                    'pincode' => '516193'
+                ],
+            ], 200),
+        ]);
+
+        \Illuminate\Support\Facades\Config::set('services.cashfree.verify_client_id', 'CF_TEST_ID');
+        \Illuminate\Support\Facades\Config::set('services.cashfree.verify_client_secret', 'CF_TEST_SECRET');
+
+        $member = Membership::create([
+            'membership_id' => '333344445555',
+            'phone' => '9777777777',
+            'payment_status' => 'success',
+            'is_completed' => 0
+        ]);
+
+        $response = $this->withSession(['verified_membership_phone' => '9777777777'])
+            ->postJson('/membership/verify-aadhaar', [
+                'aadhaar_number' => '555566667777',
+                'full_name'      => 'Kavitha Reddy',
+            ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'status'          => 'success',
+            'is_name_matched' => true,
+            'data' => [
+                'full_name'              => 'KAVITHA REDDY',
+                'gender'                 => 'Female',
+                'dob'                    => '1992-08-20',
+                'father_or_husband_name' => 'Venkata Reddy',
+                'permanent_address'      => 'Plot 45, Akkalareddypalli, Porumamilla',
+                'pincode'                => '516193'
+            ],
+            'masked_aadhaar' => 'XXXX-XXXX-7777'
+        ]);
+
+        // Verify database row was updated
+        $member->refresh();
+        $this->assertEquals('555566667777', $member->aadhaar_number);
+        $this->assertEquals('KAVITHA REDDY', $member->full_name);
+        $this->assertEquals('Female', $member->gender);
+        $this->assertEquals('1992-08-20', $member->dob);
+        $this->assertEquals('Venkata Reddy', $member->father_or_husband_name);
+        $this->assertEquals('Plot 45, Akkalareddypalli, Porumamilla', $member->permanent_address);
+        $this->assertEquals('516193', $member->pincode);
+    }
+
+    /**
+     * Test CASE 7: Missing phone session returns error and does not persist unauthenticated data.
+     */
+    public function test_case_7_missing_phone_session_returns_error(): void
+    {
+        $response = $this->postJson('/membership/verify-aadhaar', [
+            'aadhaar_number' => '555566667777',
+            'full_name'      => 'Test Person',
+        ]);
+
+        $response->assertStatus(401);
+        $response->assertJson([
+            'status' => 'error'
+        ]);
     }
 }

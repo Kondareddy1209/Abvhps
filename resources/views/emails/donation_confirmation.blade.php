@@ -59,7 +59,7 @@
 
             <!-- Button -->
             <div style="text-align: center; margin: 28px 0;">
-                <a href="{{ route('donations.receipt', $donation->id) }}" style="background-color: #FF6600; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-size: 13px; font-weight: bold; display: inline-block; text-transform: uppercase; letter-spacing: 0.5px;">
+                <a href="{{ route('donations.receipt', !empty($receiptToken) ? ['id' => $donation->id, 'token' => $receiptToken] : $donation->id) }}" style="background-color: #FF6600; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-size: 13px; font-weight: bold; display: inline-block; text-transform: uppercase; letter-spacing: 0.5px;">
                     View &amp; Download Official Receipt
                 </a>
             </div>

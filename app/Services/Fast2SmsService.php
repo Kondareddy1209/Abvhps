@@ -23,6 +23,7 @@ class Fast2SmsService
     {
         $apiKey = config('services.fast2sms.api_key');
         $senderId = config('services.fast2sms.sender_id');
+        $messageId = config('services.fast2sms.message_id');
         $templateId = config('services.fast2sms.template_id');
         $entityId = config('services.fast2sms.entity_id');
 
@@ -38,23 +39,24 @@ class Fast2SmsService
         }
 
         try {
-            // Build payload based on DLT configuration
-            if (!empty($senderId) && !empty($templateId)) {
+            // Build payload based on DLT configuration (DLT route strictly enforced)
+            if (!empty($senderId) && (!empty($messageId) || !empty($templateId))) {
                 // DLT Route
                 $payload = [
                     'route' => 'dlt',
                     'sender_id' => $senderId,
-                    'message' => $templateId,
+                    'message' => (string) ($messageId ?: $templateId),
+                    'dlt_content_template_id' => (string) $templateId,
                     'variables_values' => (string) $otp,
-                    'flash' => 0,
                     'numbers' => $phone,
+                    'flash' => 0,
                 ];
 
                 if (!empty($entityId)) {
                     $payload['entity_id'] = $entityId;
                 }
             } else {
-                // Quick OTP Route
+                // Standard OTP Route
                 $payload = [
                     'route' => 'otp',
                     'variables_values' => (string) $otp,
@@ -65,6 +67,7 @@ class Fast2SmsService
 
             Log::info("Fast2SMS: Initiating OTP SMS dispatch for {$maskedPhone} via " . ($payload['route'] ?? 'dlt') . " route.");
 
+            // Strict TLS/SSL verified HTTPS request (uses system CA bundle)
             $response = Http::timeout(10)
                 ->withHeaders([
                     'authorization' => $apiKey,
@@ -84,17 +87,26 @@ class Fast2SmsService
                         'message' => 'SMS delivered to gateway.'
                     ];
                 } else {
-                    $errorMsg = $responseData['message'][0] ?? 'Fast2SMS rejected request.';
+                    $errorMsg = $responseData['message'][0] ?? ($responseData['message'] ?? 'Fast2SMS rejected request.');
                     Log::warning("Fast2SMS Gateway Error for {$maskedPhone}: {$errorMsg}");
                     return [
                         'success' => false,
                         'status' => 'gateway_rejected',
-                        'message' => $errorMsg
+                        'message' => is_array($errorMsg) ? implode(', ', $errorMsg) : (string) $errorMsg
                     ];
                 }
             }
 
-            Log::error("Fast2SMS HTTP Error for {$maskedPhone}: Status " . $response->status());
+            $statusCode = $response->status();
+            $responseData = $response->json();
+            $responsePayload = !is_null($responseData) ? $responseData : $response->body();
+            $sanitizedResponse = self::sanitizeResponse($responsePayload, $phone, (string) $otp, (string) $apiKey);
+
+            Log::error("Fast2SMS HTTP Error for {$maskedPhone}:", [
+                'status' => $statusCode,
+                'response' => $sanitizedResponse,
+            ]);
+
             return [
                 'success' => false,
                 'status' => 'http_error',
@@ -102,12 +114,55 @@ class Fast2SmsService
             ];
 
         } catch (\Throwable $e) {
-            Log::error("Fast2SMS Exception for {$maskedPhone}: " . $e->getMessage());
+            $msg = self::sanitizeResponse($e->getMessage(), $phone, (string) $otp, (string) $apiKey);
+            Log::error("Fast2SMS Exception for {$maskedPhone}: " . $msg);
             return [
                 'success' => false,
                 'status' => 'exception',
                 'message' => 'An exception occurred during SMS dispatch.'
             ];
         }
+    }
+
+    /**
+     * Sanitize response data before logging to ensure sensitive information is never leaked.
+     *
+     * @param mixed $data
+     * @param string $phone
+     * @param string $otp
+     * @param string $apiKey
+     * @return mixed
+     */
+    protected static function sanitizeResponse($data, string $phone, string $otp, string $apiKey)
+    {
+        if (is_array($data)) {
+            $sanitized = [];
+            foreach ($data as $key => $value) {
+                if (in_array(strtolower((string) $key), ['authorization', 'api_key', 'apikey', 'secret', 'password', 'otp', 'variables_values'])) {
+                    $sanitized[$key] = '***REDACTED***';
+                } elseif (in_array(strtolower((string) $key), ['numbers', 'number', 'phone', 'mobile'])) {
+                    $sanitized[$key] = 'XXXXXX' . substr((string) $value, -4);
+                } else {
+                    $sanitized[$key] = self::sanitizeResponse($value, $phone, $otp, $apiKey);
+                }
+            }
+            return $sanitized;
+        }
+
+        if (is_string($data)) {
+            if (!empty($apiKey)) {
+                $data = str_replace($apiKey, '***REDACTED***', $data);
+            }
+            if (!empty($otp)) {
+                $data = str_replace((string) $otp, '***OTP***', $data);
+            }
+            if (!empty($phone) && strlen($phone) >= 10) {
+                $masked = 'XXXXXX' . substr($phone, -4);
+                $data = str_replace($phone, $masked, $data);
+            }
+            return $data;
+        }
+
+        return $data;
     }
 }

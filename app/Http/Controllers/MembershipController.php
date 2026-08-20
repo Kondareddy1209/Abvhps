@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use App\Models\Membership;
 use App\Services\Fast2SmsService;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class MembershipController extends Controller
 {
@@ -41,7 +42,12 @@ class MembershipController extends Controller
         );
 
         // Dispatch real OTP through Fast2SMS gateway (DLT / OTP route)
-        Fast2SmsService::sendOtp($phone, $otp);
+        $smsResult = Fast2SmsService::sendOtp($phone, $otp);
+
+        if (!$smsResult['success'] && ($smsResult['status'] ?? '') !== 'skipped') {
+            return redirect()->back()
+                ->with('error', 'SMS delivery failure: ' . ($smsResult['message'] ?? 'Gateway rejected request') . '. Please verify your mobile number or try again.');
+        }
 
         return redirect()->back()
             ->with('otp_sent_to', $phone)
@@ -153,43 +159,187 @@ class MembershipController extends Controller
      * Returns actual verified applicant data when available or validates format
      * Never returns fake fallback/default applicant names.
      */
+    /**
+     * 6b. Verify Aadhaar & Name via Cashfree Secure ID Pipeline
+     *
+     * Exact Flow:
+     * 1. Validate Aadhaar format & user-entered full name.
+     * 2. Authorize requester against active session member record.
+     * 3. Call Cashfree Secure ID Verification API server-to-server.
+     * 4. Retrieve authoritative verified identity from Cashfree.
+     * 5. Perform strict server-side normalized name comparison.
+     * 6. If match: Persist verified Cashfree identity & return auto-population data.
+     * 7. If mismatch: Reject verification, do NOT save unverified identity, return name mismatch response.
+     */
     public function verifyAadhaar(Request $request)
     {
         $validated = $request->validate([
             'aadhaar_number' => 'required|digits:12',
+            'full_name'      => 'required|string|min:2|max:255',
         ]);
 
-        $aadhaar = $validated['aadhaar_number'];
+        $aadhaar     = (string) $validated['aadhaar_number'];
+        $enteredName = (string) $validated['full_name'];
 
         // Strict Aadhaar format check: First digit cannot be 0 or 1 per UIDAI specifications
         if ($aadhaar[0] === '0' || $aadhaar[0] === '1') {
             return response()->json([
-                'status' => 'error',
-                'message' => 'Invalid Aadhaar number format. Aadhaar numbers cannot start with 0 or 1.'
+                'status'              => 'error',
+                'is_name_matched'     => false,
+                'is_aadhaar_verified' => false,
+                'message'             => 'Invalid Aadhaar number format. Aadhaar numbers cannot start with 0 or 1.'
             ], 422);
         }
 
         $phone = session('verified_membership_phone') ?? $request->input('phone');
 
-        $verifiedData = [];
-        if ($phone) {
-            $member = Membership::where('phone', $phone)->first();
-            if ($member && !empty($member->full_name) && $member->full_name !== 'PENDING') {
-                $verifiedData = [
-                    'full_name' => $member->full_name,
-                    'dob' => $member->dob ?? null,
-                    'gender' => $member->gender ?? null,
-                    'permanent_address' => $member->permanent_address ?? null,
-                    'father_or_husband_name' => $member->father_or_husband_name ?? null,
-                ];
-            }
+        if (!$phone) {
+            Log::warning("Aadhaar Verification: Missing active phone session or parameter.");
+            return response()->json([
+                'status'              => 'error',
+                'is_name_matched'     => false,
+                'is_aadhaar_verified' => false,
+                'message'             => 'Active membership session not found. Please verify your phone number first.'
+            ], 401);
         }
 
+        $maskedPhone   = 'XXXXXX' . substr($phone, -4);
+        $maskedAadhaar = 'XXXX-XXXX-' . substr($aadhaar, -4);
+
+        $member = Membership::where('phone', $phone)->first();
+
+        if (!$member) {
+            Log::warning("Aadhaar Verification: Member record not found for {$maskedPhone}.");
+            return response()->json([
+                'status'              => 'error',
+                'is_name_matched'     => false,
+                'is_aadhaar_verified' => false,
+                'message'             => 'Membership record not found for this phone number.'
+            ], 404);
+        }
+
+        // Server-controlled verification reference
+        $verificationId = 'ABVHPS_AADHAAR_' . $member->id . '_' . time();
+
+        // 3. Dispatch to Cashfree Secure ID Service
+        $secureIdService = new \App\Services\CashfreeSecureIdService();
+        $cfResult = $secureIdService->verifyAadhaar($aadhaar, $verificationId, $enteredName);
+
+        if (!$cfResult['success']) {
+            Log::warning("Aadhaar Verification: Cashfree gateway verification failed for {$maskedPhone}.", [
+                'status'  => $cfResult['status'] ?? 'FAILED',
+                'message' => $cfResult['message'] ?? 'Gateway error',
+            ]);
+
+            return response()->json([
+                'status'              => 'error',
+                'is_name_matched'     => false,
+                'is_aadhaar_verified' => false,
+                'message'             => $cfResult['message'] ?? 'Aadhaar verification failed. Please check the Aadhaar number and try again.',
+            ], 422);
+        }
+
+        // 4. Extract authoritative verified name from Cashfree response
+        $verifiedName = $cfResult['verified_name'] ?? ($cfResult['data']['name'] ?? null);
+
+        if (empty($verifiedName)) {
+            Log::error("Aadhaar Verification: Cashfree response missing verified name for {$maskedPhone}.");
+            return response()->json([
+                'status'              => 'error',
+                'is_name_matched'     => false,
+                'is_aadhaar_verified' => false,
+                'message'             => 'Aadhaar verification succeeded, but verified name could not be retrieved from provider records.',
+            ], 422);
+        }
+
+        // 5. Strict server-side Name Comparison
+        $isNameMatched = \App\Services\CashfreeSecureIdService::compareNames($enteredName, $verifiedName);
+
+        if (!$isNameMatched) {
+            Log::warning("Aadhaar Verification: Name mismatch detected for member {$maskedPhone}. Entered name does not match Cashfree verified name.");
+
+            // Do NOT mark Aadhaar verified, do NOT save unverified name / identity
+            return response()->json([
+                'status'              => 'error',
+                'is_name_matched'     => false,
+                'is_aadhaar_verified' => false,
+                'message'             => 'Aadhaar number verified, but the name does not match Aadhaar records.',
+            ], 200);
+        }
+
+        // 6. Name MATCHES: Build update payload using authoritative Cashfree identity data
+        $updatePayload = [
+            'aadhaar_number'          => $aadhaar,
+            'full_name'               => $verifiedName, // Authoritative Cashfree verified name
+            'is_aadhaar_verified'     => true,
+            'aadhaar_verification_ref' => $cfResult['ref_id'] ?? $verificationId,
+            'aadhaar_verified_at'     => \Carbon\Carbon::now('Asia/Kolkata'),
+        ];
+
+        $cfData = $cfResult['data'] ?? [];
+
+        if (!empty($cfData['dob'])) {
+            $updatePayload['dob'] = $cfData['dob'];
+        }
+        if (!empty($cfData['gender'])) {
+            $updatePayload['gender'] = $cfData['gender'];
+        }
+        if (!empty($cfData['father_or_husband_name'])) {
+            $updatePayload['father_or_husband_name'] = $cfData['father_or_husband_name'];
+        }
+        if (!empty($cfData['permanent_address'])) {
+            $updatePayload['permanent_address'] = $cfData['permanent_address'];
+        }
+        if (!empty($cfData['pincode'])) {
+            $updatePayload['pincode'] = $cfData['pincode'];
+        }
+        if (!empty($cfData['district'])) {
+            $updatePayload['district'] = $cfData['district'];
+        }
+        if (!empty($cfData['state'])) {
+            $updatePayload['state'] = $cfData['state'];
+        }
+
+        // Perform database persistence
+        try {
+            $member->update($updatePayload);
+            $member->refresh();
+        } catch (\Throwable $e) {
+            Log::error("Aadhaar Verification: Persistence failed for member {$maskedPhone}: " . $e->getMessage());
+            return response()->json([
+                'status'              => 'error',
+                'is_name_matched'     => false,
+                'is_aadhaar_verified' => false,
+                'message'             => 'Failed to save verified Aadhaar identity data to database. Please retry.',
+            ], 500);
+        }
+
+        Log::info("Aadhaar Verification: Successfully verified and persisted Aadhaar & Name for member {$maskedPhone}.", [
+            'ref_id'              => $updatePayload['aadhaar_verification_ref'],
+            'is_aadhaar_verified' => true,
+            'is_name_matched'     => true,
+        ]);
+
+        // Format verified data response for auto-fill in registration form
+        $responseData = [
+            'full_name'              => $member->full_name,
+            'dob'                    => $member->dob,
+            'gender'                 => $member->gender,
+            'father_or_husband_name' => $member->father_or_husband_name,
+            'permanent_address'      => $member->permanent_address,
+            'pincode'                => $member->pincode,
+            'district'               => $member->district,
+            'state'                  => $member->state,
+        ];
+
         return response()->json([
-            'status' => 'success',
-            'message' => 'Aadhaar Number verified successfully.',
-            'data' => !empty($verifiedData) ? $verifiedData : null,
-            'masked_aadhaar' => 'XXXX-XXXX-' . substr($aadhaar, -4)
+            'status'              => 'success',
+            'is_name_matched'     => true,
+            'is_aadhaar_verified' => true,
+            'message'             => 'Aadhaar & Name Verified Successfully!',
+            'verified_name'       => $member->full_name,
+            'data'                => array_filter($responseData, fn($v) => !is_null($v)),
+            'masked_aadhaar'      => $maskedAadhaar,
         ]);
     }
 
@@ -207,20 +357,23 @@ class MembershipController extends Controller
 
         // Standard Indian form validation rules tracking inputs including optional email
         $request->validate([
-            'aadhaar_number' => 'required|digits:12',
-            'full_name' => 'required|string|max:255',
-            'gender' => 'required|string|in:Male,Female,Other',
-            'dob' => 'required|string|max:20',
+            'aadhaar_number'         => 'required|digits:12',
+            'full_name'              => 'required|string|max:255',
+            'gender'                 => 'required|string|in:Male,Female,Other',
+            'dob'                    => 'required|string|max:20',
             'father_or_husband_name' => 'required|string|max:255',
-            'gotram' => 'required|string|max:255',
-            'occupation' => 'required|string|max:255',
-            'pincode' => 'required|digits:6',
-            'grama_panchayat' => 'required|string|max:255',
-            'mandal' => 'required|string|max:255',
-            'district' => 'required|string|max:255',
-            'state' => 'required|string|max:255',
-            'email' => 'nullable|email|max:255', // Validating optional email entry
-            'photo' => 'required|image|mimes:jpeg,png,jpg|max:2048'
+            'permanent_address'      => 'nullable|string|max:1000',
+            'present_address'        => 'nullable|string|max:1000',
+            'gotram'                 => 'required|string|max:255',
+            'occupation'             => 'required|string|max:255',
+            'blood_group'            => 'nullable|string|max:10',
+            'pincode'                => 'required|digits:6',
+            'grama_panchayat'        => 'required|string|max:255',
+            'mandal'                 => 'required|string|max:255',
+            'district'               => 'required|string|max:255',
+            'state'                  => 'required|string|max:255',
+            'email'                  => 'nullable|email|max:255',
+            'photo'                  => 'required|image|mimes:jpeg,png,jpg|max:2048'
         ]);
 
         $photoPath = null;
@@ -230,27 +383,40 @@ class MembershipController extends Controller
 
         $stateInput = $request->input('state');
         $emailInput = $request->input('email');
+        $addressToggle = $request->input('address_toggle', 'same');
+        $permanentAddress = $request->input('permanent_address');
+        $presentAddress = ($addressToggle === 'different' && !empty($request->input('present_address')))
+            ? $request->input('present_address')
+            : $permanentAddress;
 
         // Updating final record fields safely inside the database row tracking system
-        Membership::where('phone', $phone)->update([
-            'aadhaar_number' => $request->input('aadhaar_number'),
-            'full_name'      => strtoupper($request->input('full_name')),
-            'gender'         => $request->input('gender'),
-            'dob'            => $request->input('dob'),
+        $updatePayload = [
+            'aadhaar_number'         => $request->input('aadhaar_number'),
+            'full_name'              => strtoupper(trim($request->input('full_name'))),
+            'gender'                 => $request->input('gender'),
+            'dob'                    => $request->input('dob'),
             'father_or_husband_name' => $request->input('father_or_husband_name'),
-            'gotram'         => $request->input('gotram'),
-            'occupation'     => $request->input('occupation'),
-            'pincode'        => $request->input('pincode'),
-            'grama_panchayat'=> $request->input('grama_panchayat'),
-            'mandal'         => $request->input('mandal'),
-            'assembly_segment' => $request->input('assembly_segment'),
-            'district'       => $request->input('district'),
-            'state'          => $request->input('state'),
-            'email'          => $request->input('email'), 
-            'photo_path'     => $photoPath,
-            'is_completed'   => 1,
-            'updated_at'     => \Carbon\Carbon::now()
-        ]);
+            'permanent_address'      => $permanentAddress,
+            'present_address'        => $presentAddress,
+            'gotram'                 => $request->input('gotram'),
+            'occupation'             => $request->input('occupation'),
+            'blood_group'            => $request->input('blood_group'),
+            'pincode'                => $request->input('pincode'),
+            'grama_panchayat'        => $request->input('grama_panchayat'),
+            'mandal'                 => $request->input('mandal'),
+            'assembly_segment'       => $request->input('assembly_segment'),
+            'district'               => $request->input('district'),
+            'state'                  => $request->input('state'),
+            'email'                  => $emailInput,
+            'is_completed'           => 1,
+            'updated_at'             => \Carbon\Carbon::now()
+        ];
+
+        if ($photoPath) {
+            $updatePayload['photo_path'] = $photoPath;
+        }
+
+        Membership::where('phone', $phone)->update($updatePayload);
 
         // STATE LANGUAGE DETECTION LOGIC: Selecting language dynamically based on mapped input state
         $selectedLanguage = 'en'; 

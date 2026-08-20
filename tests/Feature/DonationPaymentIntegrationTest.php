@@ -385,7 +385,8 @@ class DonationPaymentIntegrationTest extends TestCase
             'paid_at'          => Carbon::now('Asia/Kolkata'),
         ]);
 
-        $response = $this->get('/donations/status/' . $donation->id);
+        $response = $this->withSession(['authorized_donation_ids' => [$donation->id]])
+            ->get('/donations/status/' . $donation->id);
 
         $response->assertStatus(200);
         $response->assertSee('Payment Successful');
@@ -416,7 +417,8 @@ class DonationPaymentIntegrationTest extends TestCase
             'paid_at'            => Carbon::now('Asia/Kolkata'),
         ]);
 
-        $response = $this->get('/donations/receipt/' . $donation->id);
+        $response = $this->withSession(['authorized_donation_ids' => [$donation->id]])
+            ->get('/donations/receipt/' . $donation->id);
 
         $response->assertStatus(200);
         $response->assertSee('AKHANDA BHARATA VISWA HINDU PARIRAKSHANA SAMITI');
@@ -426,6 +428,31 @@ class DonationPaymentIntegrationTest extends TestCase
         $response->assertSee('Razorpay');
         $response->assertSee('pay_MOCK_RECEIPT_123');
         $response->assertSee('PAID');
+    }
+
+    public function test_unauthorized_user_cannot_access_other_donation_status_or_receipt(): void
+    {
+        $donation = Donation::create([
+            'name'               => 'SECRET DEVOTEE',
+            'guardian'           => 'SECRET GUARDIAN',
+            'email'              => 'secret@abvhps.org',
+            'phone'              => '9876543210',
+            'contact'            => '9876543210',
+            'amount'             => 1000.00,
+            'payment_gateway'    => 'razorpay',
+            'payment_status'     => 'paid',
+            'receipt_number'     => 'ABVHPS-RCP-2026-000999',
+            'paid_at'            => Carbon::now('Asia/Kolkata'),
+        ]);
+
+        // Unauthorized user without session receives 404
+        $this->get('/donations/status/' . $donation->id)->assertStatus(404);
+        $this->get('/donations/receipt/' . $donation->id)->assertStatus(404);
+
+        // User with different donation in session receives 404 for this donation
+        $this->withSession(['authorized_donation_ids' => [99999]])
+            ->get('/donations/status/' . $donation->id)
+            ->assertStatus(404);
     }
 
     // =========================================================================

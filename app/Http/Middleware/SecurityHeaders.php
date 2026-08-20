@@ -35,11 +35,11 @@ class SecurityHeaders
             "font-src 'self' https://fonts.gstatic.com data:",
             "img-src 'self' data: blob: https: http:",
             "connect-src 'self' https: http: https://api.cashfree.com https://sandbox.cashfree.com https://api.razorpay.com",
-            "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://sdk.cashfree.com",
+            "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://sdk.cashfree.com https://sandbox.cashfree.com https://api.razorpay.com",
             "object-src 'none'",
             "base-uri 'self'",
             "frame-ancestors 'self'",
-            "form-action 'self'",
+            "form-action 'self' https://sandbox.cashfree.com https://api.cashfree.com https://api.razorpay.com",
         ];
         $response->headers->set('Content-Security-Policy', implode('; ', $csp));
 

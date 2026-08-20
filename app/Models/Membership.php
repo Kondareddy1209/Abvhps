@@ -44,5 +44,19 @@ class Membership extends Model
         'state',
         'country',
         'is_completed',
+        'is_aadhaar_verified',
+        'aadhaar_verification_ref',
+        'aadhaar_verified_at',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'is_aadhaar_verified' => 'boolean',
+        'is_completed' => 'boolean',
+        'aadhaar_verified_at' => 'datetime',
     ];
 }

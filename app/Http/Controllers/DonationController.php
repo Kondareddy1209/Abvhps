@@ -78,9 +78,13 @@ class DonationController extends Controller
      * Generate and return the ABVHPS official donation receipt (HTML).
      * Enhanced to include gateway details, campaign, and transaction reference.
      */
-    public function downloadReceipt($id)
+    public function downloadReceipt(Request $request, $id)
     {
         $donation = Donation::with('campaign')->findOrFail($id);
+
+        if (!$this->isAuthorizedForDonation($request, $donation)) {
+            abort(404);
+        }
 
         $logoAsset  = asset('images/ABVHPS_LOGO.jpg');
         $address    = 'Survey No:1035, Sasirekhapuram, Akkalareddy Palli, Porumamilla, Kadapa, A.P - 516193';
@@ -215,6 +219,7 @@ class DonationController extends Controller
     {
         $validated = $this->validateDonationRequest($request);
         $donation  = $this->createPendingDonation($validated, 'cashfree');
+        $this->authorizeDonationInSession($request, (int) $donation->id);
 
         $cashfree   = app(CashfreePaymentService::class);
         $returnUrl  = route('donations.cashfree_return');
@@ -256,6 +261,7 @@ class DonationController extends Controller
     {
         $validated = $this->validateDonationRequest($request);
         $donation  = $this->createPendingDonation($validated, 'razorpay');
+        $this->authorizeDonationInSession($request, (int) $donation->id);
 
         $razorpay   = app(RazorpayPaymentService::class);
         $returnUrl  = route('donations.razorpay_return');
@@ -318,6 +324,7 @@ class DonationController extends Controller
 
         if ($result['success'] && $result['status'] === 'paid') {
             $this->markDonationPaid($donation, $result['payment_id'] ?? '', $result['reference'] ?? '');
+            $this->authorizeDonationInSession($request, (int) $donation->id);
             return response()->json([
                 'success'     => true,
                 'status'      => 'paid',
@@ -362,6 +369,7 @@ class DonationController extends Controller
 
         // Already paid — show receipt
         if ($donation->payment_status === 'paid') {
+            $this->authorizeDonationInSession($request, (int) $donation->id);
             return redirect()->route('donations.status', $donation->id);
         }
 
@@ -371,12 +379,14 @@ class DonationController extends Controller
 
         if ($result['success'] && $result['status'] === 'paid') {
             $this->markDonationPaid($donation, $result['payment_id'] ?? '', $result['reference'] ?? '');
+            $this->authorizeDonationInSession($request, (int) $donation->id);
             return redirect()->route('donations.status', $donation->id);
         }
 
         // Update status but don't mark as paid
         $status = $result['status'] ?? 'pending';
         $donation->update(['payment_status' => $status]);
+        $this->authorizeDonationInSession($request, (int) $donation->id);
 
         return redirect()->route('donations.status', $donation->id);
     }
@@ -397,6 +407,7 @@ class DonationController extends Controller
             return redirect()->route('donations.grid');
         }
 
+        $this->authorizeDonationInSession($request, (int) $donationId);
         return redirect()->route('donations.status', $donationId);
     }
 
@@ -411,6 +422,10 @@ class DonationController extends Controller
     public function paymentStatus(Request $request, $id)
     {
         $donation = Donation::with('campaign')->findOrFail($id);
+
+        if (!$this->isAuthorizedForDonation($request, $donation)) {
+            abort(404);
+        }
 
         return view('donations.payment_status', compact('donation'));
     }
@@ -605,10 +620,12 @@ class DonationController extends Controller
             return;
         }
 
+        $receiptToken = hash_hmac('sha256', $donation->id . '|' . $donation->created_at . '|' . $donation->phone, config('app.key'));
+
         try {
             Mail::send(
                 'emails.donation_confirmation',
-                ['donation' => $donation],
+                ['donation' => $donation, 'receiptToken' => $receiptToken],
                 function ($message) use ($donation) {
                     $message->to($donation->email, $donation->name)
                             ->subject('🙏 ABVHPS — Donation Receipt & Confirmation');
@@ -693,5 +710,52 @@ class DonationController extends Controller
             'payment_gateway' => $gateway,
             'payment_status'  => 'pending',
         ]);
+    }
+
+    // =========================================================================
+    // AUTHORIZATION & ANTI-IDOR SECURITY HELPERS
+    // =========================================================================
+
+    /**
+     * Store authorized donation ID in session.
+     */
+    private function authorizeDonationInSession(Request $request, int $donationId): void
+    {
+        if ($request->hasSession()) {
+            $existing = (array) $request->session()->get('authorized_donation_ids', []);
+            $updated  = array_values(array_unique(array_merge($existing, [$donationId])));
+            $request->session()->put('authorized_donation_ids', $updated);
+        }
+    }
+
+    /**
+     * Check if requester is authorized to view this donation.
+     */
+    private function isAuthorizedForDonation(Request $request, Donation $donation): bool
+    {
+        // 1. Authenticated administrators or admin routes can view all donations
+        if (auth()->guard('web')->check() || $request->is('admin/*')) {
+            return true;
+        }
+
+        // 2. Session-based authorization (donor in current session)
+        if ($request->hasSession()) {
+            $authorizedIds = (array) $request->session()->get('authorized_donation_ids', []);
+            if (in_array((int) $donation->id, array_map('intval', $authorizedIds), true)) {
+                return true;
+            }
+        }
+
+        // 3. Secure token verification (for email receipts)
+        $token = $request->query('token');
+        if ($token) {
+            $expectedToken = hash_hmac('sha256', $donation->id . '|' . $donation->created_at . '|' . $donation->phone, config('app.key'));
+            if (hash_equals($expectedToken, (string) $token)) {
+                $this->authorizeDonationInSession($request, (int) $donation->id);
+                return true;
+            }
+        }
+
+        return false;
     }
 }
