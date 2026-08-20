@@ -36,6 +36,7 @@ Route::post('/membership/process-payment', [MembershipController::class, 'proces
 
 // 3. Render Membership Final Data Registration Form Desk
 Route::get('/membership/application', [MembershipController::class, 'showApplicationForm']);
+Route::post('/membership/verify-aadhaar', [MembershipController::class, 'verifyAadhaar'])->name('membership.verify_aadhaar');
 
 // 4. Secure Form Submission Desk Mapped to url('/submit-membership')
 Route::post('/submit-membership', [MembershipController::class, 'submitApplication']);
@@ -156,9 +157,42 @@ Route::get('/organic-farmers-apply', [OrganicFarmerController::class, 'showAppli
 Route::post('/organic-farmers-apply/fetch-member', [OrganicFarmerController::class, 'fetchMemberForFarming'])->name('organicfarmers.fetch_member');
 Route::post('/organic-farmers-apply/submit', [OrganicFarmerController::class, 'submitFarmerPacket'])->name('organicfarmers.submit');
 
-// Central Multimedia Fundraising Campaign Pipelines
+// ======================================================================
+// 💰 PUBLIC DONATION PAGE — Fundraising Campaigns + Donation Form
+// ======================================================================
+// GET /donations — main page showing campaigns + donation form
 Route::get('/donations', [FundraisingController::class, 'showDonationsGrid'])->name('donations.grid');
+// Dedicated single-campaign URL (for social sharing / OG meta)
 Route::get('/donations/campaign/{id}', [FundraisingController::class, 'showCampaign'])->name('donations.campaign');
+
+// Payment initiation (server-side order creation — returns JSON)
+// CSRF protected — called via JS Fetch with X-CSRF-TOKEN header
+Route::post('/donations/initiate-cashfree', [DonationController::class, 'initiateCashfreePayment'])->name('donations.initiate_cashfree');
+Route::post('/donations/initiate-razorpay', [DonationController::class, 'initiateRazorpayPayment'])->name('donations.initiate_razorpay');
+
+// Razorpay browser-callback server-side signature verification
+Route::post('/donations/verify-razorpay', [DonationController::class, 'verifyRazorpayPayment'])->name('donations.verify_razorpay');
+
+// Payment return redirects (gateway redirects browser here)
+Route::get('/donations/cashfree-return', [DonationController::class, 'cashfreeReturn'])->name('donations.cashfree_return');
+Route::get('/donations/razorpay-return', [DonationController::class, 'razorpayReturn'])->name('donations.razorpay_return');
+
+// Payment status page (server-driven, no trust in URL params)
+Route::get('/donations/status/{id}', [DonationController::class, 'paymentStatus'])->name('donations.status');
+
+// Donation receipt (accessible from status page)
+Route::get('/donations/receipt/{id}', [DonationController::class, 'downloadReceipt'])->name('donations.receipt');
+
+// ======================================================================
+// 🔔 PAYMENT GATEWAY WEBHOOKS (CSRF excluded — see bootstrap/app.php)
+// These endpoints must be registered in Cashfree + Razorpay dashboards:
+//   Cashfree:  https://abvhps.org/webhook/cashfree
+//   Razorpay:  https://abvhps.org/webhook/razorpay
+// ======================================================================
+Route::post('/webhook/cashfree', [DonationController::class, 'handleCashfreeWebhook'])->name('webhook.cashfree');
+Route::post('/webhook/razorpay', [DonationController::class, 'handleRazorpayWebhook'])->name('webhook.razorpay');
+
+// Admin fundraising create/store (kept here, also duplicated in admin group below)
 Route::get('/admin/fundraising/create', [FundraisingController::class, 'showCreateForm'])->name('admin.fundraising.create');
 Route::post('/admin/fundraising/store', [FundraisingController::class, 'storeCampaignPacket'])->name('admin.fundraising.store');
 

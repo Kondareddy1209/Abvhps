@@ -212,8 +212,8 @@
                 </div>
                 <div class="md:col-span-5 border-b md:border-b-0 md:border-r border-gray-100 pb-3 md:pb-0 px-2">
                     <span class="text-[9px] font-black text-gray-400 uppercase tracking-wider block">Registered Farmer Producer</span>
-                    <span id="cert_display_farmer_name" class="text-base font-black text-brandGray uppercase block tracking-wide">SRINIVASA RAO</span>
-                    <span id="cert_display_farmer_meta" class="text-[10px] font-mono font-bold text-gray-500">Membership ID: 915XXXXXXXXX | Mob: +91 XXXX</span>
+                    <span id="cert_display_farmer_name" class="text-base font-black text-brandGray uppercase block tracking-wide">—</span>
+                    <span id="cert_display_farmer_meta" class="text-[10px] font-mono font-bold text-gray-500">Membership ID: — | Mob: —</span>
                 </div>
                 <div class="md:col-span-5 grid grid-cols-2 gap-2 text-center px-2">
                     <div>

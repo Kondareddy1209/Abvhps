@@ -8,7 +8,9 @@
         <div class="mb-6 max-w-[600px] w-full bg-orange-50 border-l-4 border-brandOrange p-4 rounded-r shadow-sm">
             <div class="flex">
                 <div class="flex-shrink-0">
-                    <span class="text-brandOrange text-lg">🪷</span>
+                    <div class="w-6 h-6 rounded-full overflow-hidden bg-white border border-brandOrange shadow-xs flex items-center justify-center p-0.5 shrink-0">
+                        <img src="{{ asset('images/ABVHPS_LOGO.jpg') }}" class="w-full h-full object-cover rounded-full" alt="ABVHPS Logo">
+                    </div>
                 </div>
                 <div class="ml-3">
                     <p class="text-xs font-bold text-brandGray uppercase tracking-wide">Divine Welcome Email Dispatched</p>

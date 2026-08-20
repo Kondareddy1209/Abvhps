@@ -57,7 +57,7 @@
                     {{-- Full Name / Group Name --}}
                     <div class="flex justify-between items-center pb-2.5 border-b border-slate-200">
                         <span class="font-bold text-slate-500 uppercase tracking-wider text-[11px]">Full Name / Title</span>
-                        <span class="font-black text-slate-900 uppercase text-right max-w-[60%]">{{ $name }}</span>
+                        <span class="font-black text-slate-900 uppercase text-right max-w-[60%] break-words">{{ $name }}</span>
                     </div>
 
                     {{-- Cadre / Category --}}

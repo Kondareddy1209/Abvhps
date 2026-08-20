@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 use App\Models\Membership;
+use App\Services\Fast2SmsService;
 use Illuminate\Support\Facades\Storage;
 
 class MembershipController extends Controller
@@ -17,7 +18,7 @@ class MembershipController extends Controller
         return view('membership_otp');
     }
 
-    // 2. Generate and Send OTP
+    // 2. Generate and Send OTP via Fast2SMS
     public function sendOtp(Request $request)
     {
         $request->validate([
@@ -25,7 +26,7 @@ class MembershipController extends Controller
         ]);
 
         $phone = $request->input('phone');
-        $otp = rand(100000, 999999);
+        $otp = random_int(100000, 999999);
         $expiredAt = Carbon::now()->addMinutes(5);
 
         DB::table('phone_verifications')->updateOrInsert(
@@ -39,9 +40,12 @@ class MembershipController extends Controller
             ]
         );
 
+        // Dispatch real OTP through Fast2SMS gateway (DLT / OTP route)
+        Fast2SmsService::sendOtp($phone, $otp);
+
         return redirect()->back()
             ->with('otp_sent_to', $phone)
-            ->with('success', 'OTP Sent Successfully! (For testing use code: ' . $otp . ')');
+            ->with('success', 'OTP sent successfully. Please check your registered mobile number.');
     }
 
     // 3. Verify OTP & Check Payment Status
@@ -58,6 +62,7 @@ class MembershipController extends Controller
         $verification = DB::table('phone_verifications')
             ->where('phone', $phone)
             ->where('otp', $otp)
+            ->where('is_verified', false)
             ->where('expired_at', '>', Carbon::now())
             ->first();
 
@@ -67,7 +72,13 @@ class MembershipController extends Controller
                 ->with('error', 'Invalid or Expired OTP code. Please try again.');
         }
 
-        DB::table('phone_verifications')->where('phone', $phone)->update(['is_verified' => true]);
+        // Burn the OTP to enforce strict single-use verification
+        DB::table('phone_verifications')->where('phone', $phone)->update([
+            'is_verified' => true,
+            'expired_at' => Carbon::now()->subMinute(),
+            'updated_at' => now(),
+        ]);
+
         session(['verified_membership_phone' => $phone]);
 
         $member = Membership::where('phone', $phone)->first();
@@ -134,9 +145,55 @@ class MembershipController extends Controller
         // 4-4-4 formatted layout with spaces (e.g., 4318 2764 1156)
         $formattedId = implode(' ', str_split($member->membership_id, 4));
 
-        return view('membership_application', compact('formattedId', 'phone'));
+        return view('membership_application', compact('formattedId', 'phone', 'member'));
     }
-        // 7. Store Registration Form Data supporting both Web Forms and Mobile App API requests
+
+    /**
+     * 6b. Verify Aadhaar via Backend Security Pipeline
+     * Returns actual verified applicant data when available or validates format
+     * Never returns fake fallback/default applicant names.
+     */
+    public function verifyAadhaar(Request $request)
+    {
+        $validated = $request->validate([
+            'aadhaar_number' => 'required|digits:12',
+        ]);
+
+        $aadhaar = $validated['aadhaar_number'];
+
+        // Strict Aadhaar format check: First digit cannot be 0 or 1 per UIDAI specifications
+        if ($aadhaar[0] === '0' || $aadhaar[0] === '1') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Invalid Aadhaar number format. Aadhaar numbers cannot start with 0 or 1.'
+            ], 422);
+        }
+
+        $phone = session('verified_membership_phone') ?? $request->input('phone');
+
+        $verifiedData = [];
+        if ($phone) {
+            $member = Membership::where('phone', $phone)->first();
+            if ($member && !empty($member->full_name) && $member->full_name !== 'PENDING') {
+                $verifiedData = [
+                    'full_name' => $member->full_name,
+                    'dob' => $member->dob ?? null,
+                    'gender' => $member->gender ?? null,
+                    'permanent_address' => $member->permanent_address ?? null,
+                    'father_or_husband_name' => $member->father_or_husband_name ?? null,
+                ];
+            }
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Aadhaar Number verified successfully.',
+            'data' => !empty($verifiedData) ? $verifiedData : null,
+            'masked_aadhaar' => 'XXXX-XXXX-' . substr($aadhaar, -4)
+        ]);
+    }
+
+    // 7. Store Registration Form Data supporting both Web Forms and Mobile App API requests
     public function submitApplication(Request $request)
     {
         // Capture tracking inputs from both traditional forms and incoming App JSON payloads

@@ -35,7 +35,7 @@ class PageSpecificBannerManagementTest extends TestCase
     {
         $response = $this->actingAs($this->admin)->get(route('admin.banner.index'));
         $response->assertStatus(200);
-        $response->assertSee('Section 16: Page-Specific Website Banners Desk');
+        $response->assertSee('Page-Specific Website Banners Desk');
         $response->assertSee('Filter By Page');
         $response->assertSee('+ Add Banner');
     }

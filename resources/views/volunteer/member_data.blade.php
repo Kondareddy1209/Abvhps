@@ -25,15 +25,15 @@
                 </p>
             </div>
 
-            <div class="flex items-center gap-3">
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3">
                 <a href="{{ route('volunteer.dashboard') }}"
-                   class="bg-white/15 hover:bg-white/25 border border-white/20 text-white text-xs font-bold px-4 py-2 rounded-xl uppercase tracking-wider transition">
+                   class="bg-white/15 hover:bg-white/25 border border-white/20 text-white text-xs font-bold px-4 py-2 rounded-xl uppercase tracking-wider transition min-h-[44px] inline-flex items-center">
                     &larr; Dashboard
                 </a>
                 <form action="{{ route('volunteer.logout') }}" method="POST" class="inline">
                     @csrf
                     <button type="submit"
-                            class="bg-rose-600 hover:bg-rose-700 text-white text-xs font-black px-4 py-2 rounded-xl shadow uppercase tracking-wider transition cursor-pointer">
+                            class="bg-rose-600 hover:bg-rose-700 text-white text-xs font-black px-4 py-2 rounded-xl shadow uppercase tracking-wider transition cursor-pointer min-h-[44px] inline-flex items-center">
                         Sign Out
                     </button>
                 </form>
