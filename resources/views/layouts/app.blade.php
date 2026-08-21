@@ -177,119 +177,300 @@
         </div>
     </nav>
 
-    <!-- Public Mobile Navigation Drawer (< 1280px / xl) -->
-    <div id="public-mobile-backdrop" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-[70] hidden opacity-0 transition-opacity duration-300 xl:hidden" onclick="togglePublicMobileMenu(false)" aria-hidden="true"></div>
+    <!-- Scoped Navigation Scrollbar Styles -->
+    <style>
+        .public-nav-scrollbar::-webkit-scrollbar {
+            width: 5px;
+        }
+        .public-nav-scrollbar::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.4);
+        }
+        .public-nav-scrollbar::-webkit-scrollbar-thumb {
+            background: #f97316;
+            border-radius: 4px;
+        }
+        .public-nav-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #ea580c;
+        }
+        .public-nav-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: #f97316 rgba(15, 23, 42, 0.4);
+        }
 
-    <div id="public-mobile-drawer" class="fixed inset-y-0 right-0 w-[320px] max-w-[85vw] bg-white z-[80] shadow-2xl flex flex-col justify-between transform translate-x-full transition-transform duration-300 ease-in-out xl:hidden select-none" role="dialog" aria-modal="true" aria-label="Public Navigation Menu">
-        <!-- Header of Drawer -->
-        <div class="p-4 border-b border-gray-100 flex items-center justify-between bg-orange-50/50">
-            <a href="/" onclick="togglePublicMobileMenu(false)" class="flex items-center gap-2.5">
-                <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-brandOrange shadow-xs flex items-center justify-center bg-white p-0.5 shrink-0">
+        /* Glassmorphic Drawer & Backdrop (Image 1 Exact Visual Match) */
+        #public-mobile-backdrop {
+            background: rgba(0, 0, 0, 0.38) !important;
+            backdrop-filter: blur(6px) !important;
+            -webkit-backdrop-filter: blur(6px) !important;
+        }
+
+        #public-mobile-drawer {
+            background: rgba(22, 30, 46, 0.30) !important;
+            backdrop-filter: blur(14px) saturate(120%) !important;
+            -webkit-backdrop-filter: blur(14px) saturate(120%) !important;
+        }
+
+        .public-nav-row {
+            background: rgba(71, 85, 105, 0.20) !important;
+            border: 1px solid rgba(255, 255, 255, 0.10) !important;
+            backdrop-filter: blur(7px) !important;
+            -webkit-backdrop-filter: blur(7px) !important;
+            transition: all 0.2s ease;
+        }
+
+        .public-nav-row:hover {
+            background: rgba(71, 85, 105, 0.38) !important;
+            border-color: rgba(255, 255, 255, 0.20) !important;
+            color: #ffffff;
+        }
+
+        .public-nav-row.is-active {
+            background: #f97316 !important;
+            border-color: rgba(255, 255, 255, 0.3) !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.35);
+        }
+
+        .public-submenu-box {
+            background: rgba(15, 23, 42, 0.40) !important;
+            backdrop-filter: blur(6px) !important;
+            -webkit-backdrop-filter: blur(6px) !important;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            #public-mobile-drawer,
+            #public-mobile-backdrop,
+            .public-nav-row {
+                transition: none !important;
+                transform: none !important;
+            }
+        }
+    </style>
+
+    <!-- Public Mobile/Tablet Navigation Backdrop (< 1280px / xl) -->
+    <div id="public-mobile-backdrop" 
+         class="fixed inset-0 z-[70] hidden opacity-0 transition-opacity duration-300 xl:hidden" 
+         onclick="togglePublicMobileMenu(false)" 
+         aria-hidden="true"></div>
+
+    <!-- Public Mobile/Tablet Navigation Drawer (Translucent Glass Overlay - Image 1 Matched) -->
+    <div id="public-mobile-drawer" 
+         class="fixed inset-y-0 left-0 w-[min(360px,88vw)] text-white z-[80] shadow-2xl flex flex-col justify-between transform -translate-x-full transition-transform duration-300 ease-out xl:hidden select-none border-r border-white/10" 
+         role="dialog" 
+         aria-modal="true" 
+         aria-label="Public Navigation Menu">
+         
+        <!-- Header Profile Block with 58-62px Orange Outlined Close Button (Opaque #0b1426) -->
+        <div class="px-4 py-4 min-h-[96px] border-b border-white/10 flex items-center justify-between shrink-0 bg-[#0b1426]">
+            <a href="/" onclick="togglePublicMobileMenu(false)" class="flex items-center gap-3 overflow-hidden">
+                <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-brandOrange shadow-md flex items-center justify-center bg-white p-0.5 shrink-0">
                     <img src="{{ asset('images/logo_abvhps.png') }}" class="w-full h-full object-contain" alt="ABVHPS">
                 </div>
-                <div>
-                    <span class="text-xs font-black text-brandOrange uppercase tracking-wider block">ABVHPS CENTRAL</span>
-                    <span class="text-[9px] text-gray-500 font-bold uppercase tracking-wider block">Parirakshana Samiti</span>
+                <div class="overflow-hidden">
+                    <span class="text-[13px] font-black text-brandOrange uppercase tracking-wider block truncate">ABVHPS CENTRAL</span>
+                    <span class="text-[9px] text-gray-400 font-bold uppercase tracking-wider block truncate mt-0.5">Parirakshana Samiti</span>
                 </div>
             </a>
-            <button type="button" id="public-mobile-close-btn" onclick="togglePublicMobileMenu(false)" class="p-2 rounded-xl text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition min-w-[44px] min-h-[44px] flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-brandOrange cursor-pointer" aria-label="Close navigation">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+            <!-- 58-62px Square Close Button with Bold Orange Outline -->
+            <button type="button" 
+                    id="public-mobile-close-btn" 
+                    onclick="togglePublicMobileMenu(false)" 
+                    class="w-[58px] h-[58px] rounded-2xl bg-[#111c2e] border-[2.5px] border-brandOrange text-white hover:bg-brandOrange hover:text-white transition flex items-center justify-center cursor-pointer shadow-lg focus:outline-none focus:ring-2 focus:ring-brandOrange shrink-0" 
+                    aria-label="Close navigation">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
             </button>
         </div>
 
-        <!-- Navigation List (Scrollable) -->
-        <nav class="flex-1 px-4 py-3 space-y-1 overflow-y-auto text-xs font-bold text-gray-700 min-h-0">
-            <a href="/" onclick="togglePublicMobileMenu(false)" class="flex items-center gap-2.5 px-3.5 py-3 min-h-[44px] rounded-xl {{ request()->is('/') ? 'bg-orange-50 text-brandOrange font-black border border-orange-200 shadow-xs' : 'hover:bg-gray-50 hover:text-brandOrange transition' }}">
-                <span>🏠</span> Home
-            </a>
-            <a href="/about" onclick="togglePublicMobileMenu(false)" class="flex items-center gap-2.5 px-3.5 py-3 min-h-[44px] rounded-xl {{ request()->is('about*') ? 'bg-orange-50 text-brandOrange font-black border border-orange-200 shadow-xs' : 'hover:bg-gray-50 hover:text-brandOrange transition' }}">
-                <span>📖</span> About
-            </a>
-            <a href="{{ route('public.team') }}" onclick="togglePublicMobileMenu(false)" class="flex items-center gap-2.5 px-3.5 py-3 min-h-[44px] rounded-xl {{ request()->routeIs('public.team*') ? 'bg-orange-50 text-brandOrange font-black border border-orange-200 shadow-xs' : 'hover:bg-gray-50 hover:text-brandOrange transition' }}">
-                <span>👥</span> Our Team
-            </a>
-            <a href="/gallery" onclick="togglePublicMobileMenu(false)" class="flex items-center gap-2.5 px-3.5 py-3 min-h-[44px] rounded-xl {{ request()->is('gallery*') ? 'bg-orange-50 text-brandOrange font-black border border-orange-200 shadow-xs' : 'hover:bg-gray-50 hover:text-brandOrange transition' }}">
-                <span>🖼️</span> Gallery
-            </a>
-            <a href="/membership" onclick="togglePublicMobileMenu(false)" class="flex items-center gap-2.5 px-3.5 py-3 min-h-[44px] rounded-xl {{ request()->is('membership*') ? 'bg-orange-50 text-brandOrange font-black border border-orange-200 shadow-xs' : 'hover:bg-gray-50 hover:text-brandOrange transition' }}">
-                <span>💳</span> Membership
-            </a>
-            <a href="/volunteer" onclick="togglePublicMobileMenu(false)" class="flex items-center gap-2.5 px-3.5 py-3 min-h-[44px] rounded-xl {{ request()->is('volunteer*') ? 'bg-orange-50 text-brandOrange font-black border border-orange-200 shadow-xs' : 'hover:bg-gray-50 hover:text-brandOrange transition' }}">
-                <span>🤝</span> Volunteer
+        <!-- Navigation List (Translucent Surface with Readable Pill Rows) -->
+        <nav class="flex-1 p-3.5 space-y-2 overflow-y-auto public-nav-scrollbar text-[11px] font-extrabold tracking-wider uppercase text-gray-200 min-h-0">
+            
+            <!-- SECTION 1: EXPLORE SAMITI -->
+            <div class="pt-1 pb-1.5 border-b border-slate-600/40 text-[9.5px] text-brandOrange font-black tracking-widest uppercase">
+                EXPLORE SAMITI
+            </div>
+
+            <a href="/" 
+               onclick="togglePublicMobileMenu(false)" 
+               class="public-nav-row flex items-center gap-3 px-3.5 py-2.5 rounded-xl min-h-[48px] text-gray-200 shadow-xs {{ request()->is('/') ? 'is-active' : '' }}"
+               @if(request()->is('/')) aria-current="page" @endif>
+                <span class="text-sm shrink-0">🏠</span> 
+                <span class="truncate">HOME</span>
             </a>
 
+            <a href="/about" 
+               onclick="togglePublicMobileMenu(false)" 
+               class="public-nav-row flex items-center gap-3 px-3.5 py-2.5 rounded-xl min-h-[48px] text-gray-200 shadow-xs {{ request()->is('about*') ? 'is-active' : '' }}"
+               @if(request()->is('about*')) aria-current="page" @endif>
+                <span class="text-sm shrink-0">📖</span> 
+                <span class="truncate">ABOUT US</span>
+            </a>
+
+            <a href="{{ route('public.team') }}" 
+               onclick="togglePublicMobileMenu(false)" 
+               class="public-nav-row flex items-center gap-3 px-3.5 py-2.5 rounded-xl min-h-[48px] text-gray-200 shadow-xs {{ request()->routeIs('public.team*') ? 'is-active' : '' }}"
+               @if(request()->routeIs('public.team*')) aria-current="page" @endif>
+                <span class="text-sm shrink-0">👥</span> 
+                <span class="truncate">OUR TEAM</span>
+            </a>
+
+            <a href="/gallery" 
+               onclick="togglePublicMobileMenu(false)" 
+               class="public-nav-row flex items-center gap-3 px-3.5 py-2.5 rounded-xl min-h-[48px] text-gray-200 shadow-xs {{ request()->is('gallery*') ? 'is-active' : '' }}"
+               @if(request()->is('gallery*')) aria-current="page" @endif>
+                <span class="text-sm shrink-0">🖼️</span> 
+                <span class="truncate">MEDIA GALLERY</span>
+            </a>
+
+            <a href="/membership" 
+               onclick="togglePublicMobileMenu(false)" 
+               class="public-nav-row flex items-center gap-3 px-3.5 py-2.5 rounded-xl min-h-[48px] text-gray-200 shadow-xs {{ request()->is('membership*') ? 'is-active' : '' }}"
+               @if(request()->is('membership*')) aria-current="page" @endif>
+                <span class="text-sm shrink-0">💳</span> 
+                <span class="truncate">MEMBERSHIP PORTAL</span>
+            </a>
+
+            <a href="/volunteer" 
+               onclick="togglePublicMobileMenu(false)" 
+               class="public-nav-row flex items-center gap-3 px-3.5 py-2.5 rounded-xl min-h-[48px] text-gray-200 shadow-xs {{ request()->is('volunteer*') ? 'is-active' : '' }}"
+               @if(request()->is('volunteer*')) aria-current="page" @endif>
+                <span class="text-sm shrink-0">🤝</span> 
+                <span class="truncate">VOLUNTEER CADRE</span>
+            </a>
+
+            <!-- SECTION 2: ACADEMICS & SERVICES -->
+            <div class="pt-3 pb-1.5 border-b border-slate-600/40 text-[9.5px] text-brandOrange font-black tracking-widest uppercase">
+                ACADEMICS & SERVICES
+            </div>
+
             <!-- Accordion 1: Exam -->
-            <div class="border border-gray-100 rounded-xl overflow-hidden my-1 bg-gray-50/50">
-                <button type="button" onclick="togglePublicSubmenu('public-exam-submenu', 'public-exam-arrow')" class="w-full flex items-center justify-between px-3.5 py-3 min-h-[44px] text-gray-700 hover:text-brandOrange transition focus:outline-none cursor-pointer">
-                    <span class="flex items-center gap-2.5"><span>📝</span> Exam</span>
+            <div class="rounded-xl overflow-hidden shadow-xs">
+                <button type="button" 
+                        onclick="togglePublicSubmenu('public-exam-submenu', 'public-exam-arrow')" 
+                        class="public-nav-row w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-gray-200 hover:text-brandOrange transition focus:outline-none cursor-pointer min-h-[48px]">
+                    <span class="flex items-center gap-3 font-extrabold text-[11px] uppercase tracking-wider">
+                        <span class="text-sm">📝</span> <span>EXAMS INFO & RESULTS</span>
+                    </span>
                     <svg id="public-exam-arrow" class="w-4 h-4 transition-transform duration-200 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
                     </svg>
                 </button>
-                <div id="public-exam-submenu" class="hidden pl-6 pr-3 pb-2 space-y-1 bg-white border-t border-gray-100 text-[11px]">
-                    <a href="{{ route('public.exams_board') }}" onclick="togglePublicMobileMenu(false)" class="block px-3 py-2.5 min-h-[44px] rounded-lg text-gray-600 hover:text-brandOrange hover:bg-orange-50 transition border-b border-gray-50">
-                        📋 Exams Notice Board
+                <div id="public-exam-submenu" 
+                     class="public-submenu-box hidden px-2.5 pb-2 pt-1.5 space-y-1 rounded-b-xl border-x border-b border-white/10 text-[10.5px] font-bold mt-1">
+                    <a href="{{ route('public.exams_board') }}" 
+                       onclick="togglePublicMobileMenu(false)" 
+                       class="block px-3 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-slate-700/70 transition border-b border-gray-800/60">
+                        📋 EXAMS NOTICE BOARD
                     </a>
-                    <a href="{{ route('exam.form') }}" onclick="togglePublicMobileMenu(false)" class="block px-3 py-2.5 min-h-[44px] rounded-lg text-gray-600 hover:text-brandOrange hover:bg-orange-50 transition border-b border-gray-50">
-                        ✍️ Apply Online
+                    <a href="{{ route('exam.form') }}" 
+                       onclick="togglePublicMobileMenu(false)" 
+                       class="block px-3 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-slate-700/70 transition border-b border-gray-800/60">
+                        ✍️ APPLY ONLINE
                     </a>
-                    <a href="{{ route('exam.results_portal') }}" onclick="togglePublicMobileMenu(false)" class="block px-3 py-2.5 min-h-[44px] rounded-lg text-gray-600 hover:text-brandOrange hover:bg-orange-50 transition">
-                        🏆 View Results
+                    <a href="{{ route('exam.results_portal') }}" 
+                       onclick="togglePublicMobileMenu(false)" 
+                       class="block px-3 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-slate-700/70 transition">
+                        🏆 VIEW RESULTS
                     </a>
                 </div>
             </div>
 
+            <!-- SECTION 3: OUR WINGS -->
+            <div class="pt-3 pb-1.5 border-b border-slate-600/40 text-[9.5px] text-brandOrange font-black tracking-widest uppercase">
+                OUR WINGS SUBSYSTEMS
+            </div>
+
             <!-- Accordion 2: Our Wings -->
-            <div class="border border-gray-100 rounded-xl overflow-hidden my-1 bg-gray-50/50">
-                <button type="button" onclick="togglePublicSubmenu('public-wings-submenu', 'public-wings-arrow')" class="w-full flex items-center justify-between px-3.5 py-3 min-h-[44px] text-gray-700 hover:text-brandOrange transition focus:outline-none cursor-pointer">
-                    <span class="flex items-center gap-2.5 uppercase font-black"><span>🚩</span> OUR WINGS</span>
+            <div class="rounded-xl overflow-hidden shadow-xs">
+                <button type="button" 
+                        onclick="togglePublicSubmenu('public-wings-submenu', 'public-wings-arrow')" 
+                        class="public-nav-row w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-gray-200 hover:text-brandOrange transition focus:outline-none cursor-pointer min-h-[48px]">
+                    <span class="flex items-center gap-3 font-extrabold text-[11px] uppercase tracking-wider">
+                        <span class="text-sm">🚩</span> <span>OUR WINGS</span>
+                    </span>
                     <svg id="public-wings-arrow" class="w-4 h-4 transition-transform duration-200 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
                     </svg>
                 </button>
-                <div id="public-wings-submenu" class="hidden pl-6 pr-3 pb-2 space-y-1 bg-white border-t border-gray-100 text-[11px]">
-                    <a href="{{ route('rudrasena.form') }}" onclick="togglePublicMobileMenu(false)" class="flex items-center gap-2 px-3 py-2.5 min-h-[44px] rounded-lg text-gray-700 hover:text-brandOrange hover:bg-orange-50 font-black transition border-b border-gray-50">
+                <div id="public-wings-submenu" 
+                     class="public-submenu-box hidden px-2.5 pb-2 pt-1.5 space-y-1 rounded-b-xl border-x border-b border-white/10 text-[10.5px] font-bold mt-1">
+                    <a href="{{ route('rudrasena.form') }}" 
+                       onclick="togglePublicMobileMenu(false)" 
+                       class="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-slate-700/70 transition border-b border-gray-800/60">
                         <span>🔱</span> RUDRASENA DAL
                     </a>
-                    <a href="{{ route('kalabrundam.form') }}" onclick="togglePublicMobileMenu(false)" class="flex items-center gap-2 px-3 py-2.5 min-h-[44px] rounded-lg text-gray-700 hover:text-brandOrange hover:bg-orange-50 font-black transition border-b border-gray-50">
+                    <a href="{{ route('kalabrundam.form') }}" 
+                       onclick="togglePublicMobileMenu(false)" 
+                       class="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-slate-700/70 transition border-b border-gray-800/60">
                         <span>🪘</span> KALA BRUNDAM
                     </a>
-                    <a href="{{ route('gramasevadal.form') }}" onclick="togglePublicMobileMenu(false)" class="flex items-center gap-2 px-3 py-2.5 min-h-[44px] rounded-lg text-gray-700 hover:text-brandOrange hover:bg-orange-50 font-black transition border-b border-gray-50">
+                    <a href="{{ route('gramasevadal.form') }}" 
+                       onclick="togglePublicMobileMenu(false)" 
+                       class="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-slate-700/70 transition border-b border-gray-800/60">
                         <span>🌱</span> GRAMA SEVA DAL
                     </a>
-                    <a href="{{ route('organicfarmers.form') }}" onclick="togglePublicMobileMenu(false)" class="flex items-center gap-2 px-3 py-2.5 min-h-[44px] rounded-lg text-gray-700 hover:text-brandOrange hover:bg-orange-50 font-black transition">
+                    <a href="{{ route('organicfarmers.form') }}" 
+                       onclick="togglePublicMobileMenu(false)" 
+                       class="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-slate-700/70 transition">
                         <span>🌾</span> ORGANIC FARMERS
                     </a>
                 </div>
             </div>
 
-            <a href="{{ route('donations.grid') }}" onclick="togglePublicMobileMenu(false)" class="flex items-center gap-2.5 px-3.5 py-3 min-h-[44px] rounded-xl {{ request()->routeIs('donations.*') ? 'bg-orange-50 text-brandOrange font-black border border-orange-200 shadow-xs' : 'hover:bg-gray-50 hover:text-brandOrange transition' }}">
-                <span>💰</span> Fundraise
-            </a>
-            <a href="{{ route('public.blogs') }}" onclick="togglePublicMobileMenu(false)" class="flex items-center gap-2.5 px-3.5 py-3 min-h-[44px] rounded-xl {{ request()->routeIs('public.blogs*') ? 'bg-orange-50 text-brandOrange font-black border border-orange-200 shadow-xs' : 'hover:bg-gray-50 hover:text-brandOrange transition' }}">
-                <span>📰</span> Blogs
-            </a>
-            <a href="{{ route('public.contact') }}" onclick="togglePublicMobileMenu(false)" class="flex items-center gap-2.5 px-3.5 py-3 min-h-[44px] rounded-xl {{ request()->routeIs('public.contact*') ? 'bg-orange-50 text-brandOrange font-black border border-orange-200 shadow-xs' : 'hover:bg-gray-50 hover:text-brandOrange transition' }}">
-                <span>📩</span> Contact
+            <!-- SECTION 4: COMMUNITY & SUPPORT -->
+            <div class="pt-3 pb-1.5 border-b border-slate-600/40 text-[9.5px] text-brandOrange font-black tracking-widest uppercase">
+                COMMUNITY & SUPPORT
+            </div>
+
+            <a href="{{ route('donations.grid') }}" 
+               onclick="togglePublicMobileMenu(false)" 
+               class="public-nav-row flex items-center gap-3 px-3.5 py-2.5 rounded-xl min-h-[48px] text-gray-200 shadow-xs {{ request()->routeIs('donations.*') ? 'is-active' : '' }}"
+               @if(request()->routeIs('donations.*')) aria-current="page" @endif>
+                <span class="text-sm shrink-0">💰</span> 
+                <span class="truncate">FUNDRAISE CAMPAIGNS</span>
             </a>
 
-            <div class="pt-3 pb-1">
-                <a href="{{ route('donations.grid') }}" onclick="togglePublicMobileMenu(false)" class="w-full bg-brandOrange text-white font-black text-center py-3 min-h-[44px] rounded-xl shadow hover:bg-opacity-95 transition flex items-center justify-center gap-2 uppercase tracking-wider">
-                    <span>🙏</span> Make a Donation
+            <a href="{{ route('public.blogs') }}" 
+               onclick="togglePublicMobileMenu(false)" 
+               class="public-nav-row flex items-center gap-3 px-3.5 py-2.5 rounded-xl min-h-[48px] text-gray-200 shadow-xs {{ request()->routeIs('public.blogs*') ? 'is-active' : '' }}"
+               @if(request()->routeIs('public.blogs*')) aria-current="page" @endif>
+                <span class="text-sm shrink-0">📰</span> 
+                <span class="truncate">BLOGS & UPDATES</span>
+            </a>
+
+            <a href="{{ route('public.contact') }}" 
+               onclick="togglePublicMobileMenu(false)" 
+               class="public-nav-row flex items-center gap-3 px-3.5 py-2.5 rounded-xl min-h-[48px] text-gray-200 shadow-xs {{ request()->routeIs('public.contact*') ? 'is-active' : '' }}"
+               @if(request()->routeIs('public.contact*')) aria-current="page" @endif>
+                <span class="text-sm shrink-0">📩</span> 
+                <span class="truncate">CONTACT US</span>
+            </a>
+
+            <!-- CTA: MAKE A DONATION -->
+            <div class="pt-2 pb-1">
+                <a href="{{ route('donations.grid') }}" 
+                   onclick="togglePublicMobileMenu(false)" 
+                   class="w-full bg-brandOrange hover:bg-orange-600 text-white font-black text-center py-2.5 min-h-[48px] rounded-xl shadow-md transition flex items-center justify-center gap-2 uppercase tracking-wider text-xs border border-orange-400/50 cursor-pointer">
+                    <span class="text-base">🙏</span> MAKE A DONATION
                 </a>
             </div>
         </nav>
 
-        <!-- Footer of Drawer -->
-        <div class="p-4 border-t border-gray-100 bg-gray-50 space-y-2 text-[11px]">
-            <a href="{{ route('public.certificates') }}" onclick="togglePublicMobileMenu(false)" class="block text-brandOrange font-bold hover:underline">
-                📜 80G / 12A Tax Exemption Compliance
+        <!-- Footer of Drawer (Opaque #0b1426) -->
+        <div class="p-3.5 border-t border-white/10 space-y-1.5 text-[10px] shrink-0 bg-[#0b1426]">
+            <a href="{{ route('public.certificates') }}" 
+               onclick="togglePublicMobileMenu(false)" 
+               class="block text-brandOrange font-black tracking-wider uppercase hover:underline">
+                📜 80G / 12A TAX EXEMPTION COMPLIANCE
             </a>
-            <div class="text-gray-500 text-[10px] space-y-0.5">
+            <div class="text-gray-400 text-[9px] space-y-0.5 font-bold">
                 <div>📞 {{ \App\Models\SiteSetting::get('contact_phone', '+91 8884933379') }}</div>
                 <div>✉️ {{ \App\Models\SiteSetting::get('contact_email', 'info@abvhps.org') }}</div>
+            </div>
+            <div class="text-center text-[8px] font-black text-gray-500 tracking-wider pt-1 border-t border-white/10">
+                ABVHPS CENTRAL PORTAL V2.0
             </div>
         </div>
     </div>
@@ -368,7 +549,7 @@
 
                 if (!drawer || !backdrop) return;
 
-                var isOpen = !drawer.classList.contains('translate-x-full');
+                var isOpen = !drawer.classList.contains('-translate-x-full');
                 var shouldOpen = typeof forceState === 'boolean' ? forceState : !isOpen;
 
                 if (shouldOpen) {
@@ -377,7 +558,7 @@
                     setTimeout(function() {
                         backdrop.classList.remove('opacity-0');
                         backdrop.classList.add('opacity-100');
-                        drawer.classList.remove('translate-x-full');
+                        drawer.classList.remove('-translate-x-full');
                         drawer.classList.add('translate-x-0');
                     }, 10);
 
@@ -386,7 +567,7 @@
                     if (closeBtn) setTimeout(function() { closeBtn.focus(); }, 150);
                 } else {
                     drawer.classList.remove('translate-x-0');
-                    drawer.classList.add('translate-x-full');
+                    drawer.classList.add('-translate-x-full');
                     backdrop.classList.remove('opacity-100');
                     backdrop.classList.add('opacity-0');
 
@@ -420,7 +601,7 @@
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape' || e.keyCode === 27) {
                     var drawer = document.getElementById('public-mobile-drawer');
-                    if (drawer && !drawer.classList.contains('translate-x-full')) {
+                    if (drawer && !drawer.classList.contains('-translate-x-full')) {
                         window.togglePublicMobileMenu(false);
                     }
                 }
