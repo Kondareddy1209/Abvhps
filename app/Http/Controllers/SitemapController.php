@@ -41,7 +41,7 @@ class SitemapController extends Controller
         $campaignEntries = [];
         foreach ($campaigns as $camp) {
             $campaignEntries[] = [
-                'loc' => $baseUrl . '/donations#campaign_' . $camp->id,
+                'loc' => $baseUrl . '/donations/campaign/' . $camp->id,
                 'changefreq' => 'daily',
                 'priority' => '0.85',
                 'lastmod' => $camp->updated_at ? $camp->updated_at->toIso8601String() : null,

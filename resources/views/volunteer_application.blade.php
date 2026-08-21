@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<section class="max-w-3xl mx-auto my-8 p-6 bg-white rounded-xl shadow border border-gray-100">
+<section class="max-w-3xl mx-auto my-4 sm:my-8 p-4 sm:p-6 bg-white rounded-xl shadow border border-gray-100">
     
     <!-- 1. Form Header Banner Section -->
     <div class="border-b border-gray-100 pb-3 mb-6 text-center">

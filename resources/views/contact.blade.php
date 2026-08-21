@@ -36,7 +36,7 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             <!-- Left Info Panel (5 Columns) -->
-            <div class="lg:col-span-5 bg-brandDarkGray text-white rounded-2xl p-8 space-y-6 shadow-xl relative overflow-hidden">
+            <div class="lg:col-span-5 bg-brandDarkGray text-white rounded-2xl p-5 sm:p-8 space-y-6 shadow-xl relative overflow-hidden">
                 <div class="space-y-2">
                     <h3 class="text-xl font-black uppercase text-brandOrange">Central Headquarters</h3>
                     <p class="text-xs text-gray-400 leading-relaxed">
@@ -81,7 +81,7 @@
             </div>
 
             <!-- Right Contact Form (7 Columns) -->
-            <div class="lg:col-span-7 bg-white rounded-2xl p-8 border border-gray-200 shadow-md">
+            <div class="lg:col-span-7 bg-white rounded-2xl p-5 sm:p-8 border border-gray-200 shadow-md">
                 <div class="mb-6">
                     <h3 class="text-xl font-black text-gray-900 uppercase">Send Us A Message</h3>
                     <p class="text-xs text-gray-500 mt-1">Please fill out your details below and our team will get back to you.</p>

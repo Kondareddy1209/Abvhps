@@ -18,9 +18,17 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->alias([
-            'volunteer.auth' => \App\Http\Middleware\EnsureVolunteerIsApproved::class,
+            'volunteer.auth'     => \App\Http\Middleware\EnsureVolunteerIsApproved::class,
             'volunteer.password' => \App\Http\Middleware\EnsureVolunteerChangedPassword::class,
-            'security.headers' => \App\Http\Middleware\SecurityHeaders::class,
+            'security.headers'   => \App\Http\Middleware\SecurityHeaders::class,
+        ]);
+
+        // Exclude payment gateway webhook endpoints from CSRF verification.
+        // Cashfree and Razorpay are external services that POST without CSRF tokens.
+        // ONLY these specific endpoints are excluded — global CSRF remains active.
+        $middleware->validateCsrfTokens(except: [
+            '/webhook/cashfree',
+            '/webhook/razorpay',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

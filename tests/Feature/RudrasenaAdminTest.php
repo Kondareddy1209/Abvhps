@@ -59,8 +59,9 @@ class RudrasenaAdminTest extends TestCase
     {
         $response = $this->actingAs($this->admin)->get(route('admin.membership.ledger'));
         $response->assertStatus(200);
-        $response->assertSee('9. RUDRASENA');
-        $response->assertDontSee('9. RUDRASENA MATRIX');
+        $response->assertSee('RUDRASENA');
+        $response->assertDontSee('9. RUDRASENA');
+        $response->assertDontSee('RUDRASENA MATRIX');
     }
 
     public function test_public_rudrasena_submission_requires_and_stores_volunteer_type(): void

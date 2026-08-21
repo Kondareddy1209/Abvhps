@@ -56,7 +56,8 @@ class WhatsAppIntegrationTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('https://wa.me/919989980055', false);
-        $response->assertSee('17. WHATSAPP', false);
+        $response->assertSee('WHATSAPP', false);
+        $response->assertDontSee('17. WHATSAPP');
         $response->assertSee('target="_blank"', false);
         $response->assertSee('rel="noopener noreferrer"', false);
     }

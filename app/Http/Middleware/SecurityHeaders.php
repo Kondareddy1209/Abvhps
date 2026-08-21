@@ -27,19 +27,19 @@ class SecurityHeaders
         // 4. Permissions Policy
         $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
 
-        // 5. Content Security Policy (Strict yet compatible with Tailwind CDN, Google Fonts, and dynamic QR SVG/Data)
+        // 5. Content Security Policy (Strict yet compatible with Tailwind CDN, Google Fonts, dynamic QR, Cashfree & Razorpay)
         $csp = [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://sdk.cashfree.com https://checkout.razorpay.com https://api.razorpay.com",
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
             "font-src 'self' https://fonts.gstatic.com data:",
             "img-src 'self' data: blob: https: http:",
-            "connect-src 'self' https: http:",
-            "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com",
+            "connect-src 'self' https: http: https://api.cashfree.com https://sandbox.cashfree.com https://api.razorpay.com",
+            "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://sdk.cashfree.com https://sandbox.cashfree.com https://api.razorpay.com",
             "object-src 'none'",
             "base-uri 'self'",
             "frame-ancestors 'self'",
-            "form-action 'self'",
+            "form-action 'self' https://sandbox.cashfree.com https://api.cashfree.com https://api.razorpay.com",
         ];
         $response->headers->set('Content-Security-Policy', implode('; ', $csp));
 

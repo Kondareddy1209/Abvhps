@@ -268,8 +268,8 @@
                                     <div class="bg-brandOrange h-full rounded-full transition-all duration-500" style="width: {{ $percent }}%"></div>
                                 </div>
                                 <div class="flex justify-between text-[11px] font-bold text-gray-600">
-                                    <span>Raised: <strong class="text-brandOrange font-mono">₹{{ number_format($raised) }}</strong> ({{ $percent }}%)</span>
-                                    <span>Target: <strong class="text-gray-900 font-mono">₹{{ number_format($target) }}</strong></span>
+                                    <span>Raised: <strong class="text-brandOrange font-mono">{{ \App\Models\FundraisingCampaign::formatIndianCurrency($raised) }}</strong> ({{ $percent }}%)</span>
+                                    <span>Target: <strong class="text-gray-900 font-mono">{{ \App\Models\FundraisingCampaign::formatIndianCurrency($target) }}</strong></span>
                                 </div>
                             </div>
                         </div>
@@ -277,7 +277,7 @@
                         <!-- Action CTA Button & WhatsApp Share -->
                         <div class="p-5 pt-0 space-y-2">
                             <div class="grid grid-cols-2 gap-2">
-                                <a href="{{ route('donations.grid') }}#campaign_{{ $campaign->id }}" class="block w-full bg-brandOrange hover:bg-opacity-90 text-white font-bold text-center py-2.5 px-3 rounded-xl text-xs uppercase tracking-wider transition">
+                                <a href="{{ route('donations.campaign', $campaign->id) }}" class="block w-full bg-brandOrange hover:bg-opacity-90 text-white font-bold text-center py-2.5 px-3 rounded-xl text-xs uppercase tracking-wider transition">
                                     Contribute →
                                 </a>
                                 <a href="{{ $campaign->whatsapp_share_url }}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-1.5 bg-[#25D366] hover:bg-[#20ba59] text-white font-bold text-center py-2.5 px-3 rounded-xl text-xs uppercase tracking-wider shadow-xs transition" aria-label="Share {{ $campaign->title }} on WhatsApp">

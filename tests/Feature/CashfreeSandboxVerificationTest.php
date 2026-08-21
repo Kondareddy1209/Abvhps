@@ -36,8 +36,7 @@ class CashfreeSandboxVerificationTest extends TestCase
      */
     public function test_cashfree_sandbox_api_connectivity(): void
     {
-        $res = Http::withoutVerifying()
-            ->withHeaders([
+        $res = Http::withHeaders([
                 'x-client-id' => config('services.cashfree.app_id', 'TEST_CLIENT_ID'),
                 'x-client-secret' => config('services.cashfree.secret_key', 'TEST_SECRET_KEY'),
                 'x-api-version' => config('services.cashfree.api_version', '2023-08-01'),

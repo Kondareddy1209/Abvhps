@@ -192,8 +192,8 @@
                 </div>
                 <div class="flex flex-col justify-center">
                     <span class="text-[10px] font-black text-gray-400 uppercase tracking-wider block">Designated Commanding Leader / President</span>
-                    <span id="charter_display_leader_name" class="text-base font-black text-emerald-700 uppercase tracking-wide">SRINIVASA RAO</span>
-                    <span id="charter_display_leader_meta" class="text-[10px] font-mono font-bold text-gray-500">ID: 915XXXXXXXXX | Mob: +91 XXXX</span>
+                    <span id="charter_display_leader_name" class="text-base font-black text-emerald-700 uppercase tracking-wide">—</span>
+                    <span id="charter_display_leader_meta" class="text-[10px] font-mono font-bold text-gray-500">ID: — | Mob: —</span>
                 </div>
             </div>
 

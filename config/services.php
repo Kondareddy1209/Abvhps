@@ -36,10 +36,29 @@ return [
     ],
 
     'cashfree' => [
-        'app_id' => env('CASHFREE_APP_ID', ''),
-        'secret_key' => env('CASHFREE_SECRET_KEY', ''),
-        'api_version' => env('CASHFREE_API_VERSION', '2023-08-01'),
-        'environment' => env('CASHFREE_ENV', 'sandbox'), // 'sandbox' or 'production'
+        'app_id'                => env('CASHFREE_APP_ID', ''),
+        'secret_key'            => env('CASHFREE_SECRET_KEY', ''),
+        'verify_client_id'      => env('CASHFREE_VERIFY_CLIENT_ID', ''),
+        'verify_client_secret'  => env('CASHFREE_VERIFY_CLIENT_SECRET', ''),
+        'verification_base_url' => env('CASHFREE_VERIFICATION_BASE_URL', ''),
+        'webhook_secret'        => env('CASHFREE_WEBHOOK_SECRET', ''),
+        'api_version'           => env('CASHFREE_API_VERSION', '2023-08-01'),
+        'environment'           => env('CASHFREE_ENV', 'sandbox'), // 'sandbox' or 'production'
+    ],
+
+    'razorpay' => [
+        'key_id' => env('RAZORPAY_KEY_ID', ''),
+        'key_secret' => env('RAZORPAY_KEY_SECRET', ''),
+        'webhook_secret' => env('RAZORPAY_WEBHOOK_SECRET', ''),
+        'mode' => env('RAZORPAY_MODE', 'test'), // 'test' or 'live'
+    ],
+
+    'fast2sms' => [
+        'api_key' => env('FAST2SMS_API_KEY', ''),
+        'entity_id' => env('FAST2SMS_ENTITY_ID', ''),
+        'sender_id' => env('FAST2SMS_SENDER_ID', 'ABVHPS'),
+        'message_id' => env('FAST2SMS_MESSAGE_ID', ''),
+        'template_id' => env('FAST2SMS_TEMPLATE_ID', ''),
     ],
 
 ];

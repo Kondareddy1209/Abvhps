@@ -7,9 +7,11 @@
 <section class="min-h-[500px] flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow border border-gray-100">
         <div class="text-center">
-            <span class="text-4xl text-brandOrange">🪷</span>
-            <h2 class="mt-2 text-3xl font-extrabold text-brandGray">Membership Verification</h2>
-            <p class="mt-2 text-xs text-gray-500">Akhanda Bharatha Viswa Hindu Parirakshana Samiti</p>
+            <div class="w-16 h-16 rounded-full overflow-hidden bg-white border-2 border-brandOrange shadow mx-auto mb-3 flex items-center justify-center p-0.5 shrink-0">
+                <img src="{{ asset('images/ABVHPS_LOGO.jpg') }}" class="w-full h-full object-cover rounded-full" alt="ABVHPS Logo">
+            </div>
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-brandGray">Membership Verification</h2>
+            <p class="mt-1 text-xs text-gray-500">Akhanda Bharatha Viswa Hindu Parirakshana Samiti</p>
         </div>
 
         <!-- Notification Alerts -->

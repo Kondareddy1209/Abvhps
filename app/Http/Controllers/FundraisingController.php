@@ -12,10 +12,15 @@ use Carbon\Carbon;
 class FundraisingController extends Controller
 {
     /**
-     * Public Multi-Campaign Donations Grid
+     * Public Multi-Campaign Donations Grid (supports ?campaign={id} for crawler metadata)
      */
-    public function showDonationsGrid()
+    public function showDonationsGrid(Request $request)
     {
+        $featuredCampaign = null;
+        if ($request->has('campaign')) {
+            $featuredCampaign = FundraisingCampaign::find($request->get('campaign'));
+        }
+
         $campaigns = FundraisingCampaign::active()
             ->orderBy('id', 'desc')
             ->get();
@@ -25,7 +30,26 @@ class FundraisingController extends Controller
             $campaign->facebook_share = $campaign->facebook_share_url;
         }
 
-        return view('donations_grid', compact('campaigns'));
+        return view('donations_grid', compact('campaigns', 'featuredCampaign'));
+    }
+
+    /**
+     * Dedicated Single Campaign Public View & Crawler Endpoint (/donations/campaign/{id})
+     */
+    public function showCampaign($id)
+    {
+        $featuredCampaign = FundraisingCampaign::findOrFail($id);
+
+        $campaigns = FundraisingCampaign::active()
+            ->orderBy('id', 'desc')
+            ->get();
+
+        foreach ($campaigns as $campaign) {
+            $campaign->whatsapp_share = $campaign->whatsapp_share_url;
+            $campaign->facebook_share = $campaign->facebook_share_url;
+        }
+
+        return view('donations_grid', compact('campaigns', 'featuredCampaign'));
     }
 
     /**

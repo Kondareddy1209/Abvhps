@@ -64,8 +64,8 @@ class HomepageFundraisingIntegrationTest extends TestCase
         $response->assertSee('Support meaningful initiatives and help us serve communities across India.', false);
         $response->assertSee('GOSHALA DEVELOPMENT PROJECT', false);
         $response->assertSee('Dedicated development of sacred goshalas', false);
-        $response->assertSee('₹175,000', false);
-        $response->assertSee('₹500,000', false);
+        $response->assertSee('₹1,75,000', false);
+        $response->assertSee('₹5,00,000', false);
         $response->assertSee('35%', false); // 175000 / 500000 = 35%
         $response->assertSee('🎥 Video Briefing Available', false);
         $response->assertSee(asset('storage/campaigns/covers/test_goshala.jpg'), false);
@@ -138,7 +138,7 @@ class HomepageFundraisingIntegrationTest extends TestCase
     }
 
     /**
-     * 4. Admin creating a campaign via admin form immediately reflects on Homepage
+     * 4. Admin creating a campaign via admin form immediately reflects on Homepage with Indian currency
      */
     public function test_admin_creating_campaign_immediately_appears_on_homepage()
     {
@@ -158,8 +158,8 @@ class HomepageFundraisingIntegrationTest extends TestCase
         $homeResponse = $this->get('/');
         $homeResponse->assertStatus(200);
         $homeResponse->assertSee('SRI RAMA TEMPLE CONSTRUCTION');
-        $homeResponse->assertSee('₹250,000');
-        $homeResponse->assertSee('₹1,000,000');
+        $homeResponse->assertSee('₹2,50,000');
+        $homeResponse->assertSee('₹10,00,000');
         $homeResponse->assertSee('25%');
     }
 
@@ -309,8 +309,8 @@ class HomepageFundraisingIntegrationTest extends TestCase
         $this->assertStringContainsString('wa.me/?text=', $campA->whatsapp_share_url);
         $this->assertStringContainsString(rawurlencode($campA->title), $campA->whatsapp_share_url);
         $this->assertStringContainsString(rawurlencode($campB->title), $campB->whatsapp_share_url);
-        $this->assertStringContainsString(rawurlencode(route('donations.grid') . '#campaign_' . $campA->id), $campA->whatsapp_share_url);
-        $this->assertStringContainsString(rawurlencode(route('donations.grid') . '#campaign_' . $campB->id), $campB->whatsapp_share_url);
+        $this->assertStringContainsString(rawurlencode(route('donations.campaign', $campA->id)), $campA->whatsapp_share_url);
+        $this->assertStringContainsString(rawurlencode(route('donations.campaign', $campB->id)), $campB->whatsapp_share_url);
 
         // Assert donations grid page also has WhatsApp share links
         $gridResponse = $this->get(route('donations.grid'));
@@ -344,5 +344,43 @@ class HomepageFundraisingIntegrationTest extends TestCase
         $response = $this->get('/');
         $response->assertStatus(200);
         $response->assertSee($shareUrl, false);
+    }
+
+    /**
+     * 11. Indian currency formatting function accurately handles various magnitudes
+     */
+    public function test_indian_currency_formatting_accurately_handles_magnitudes()
+    {
+        $this->assertEquals('₹50,00,000', FundraisingCampaign::formatIndianCurrency(5000000));
+        $this->assertEquals('₹1,00,000', FundraisingCampaign::formatIndianCurrency(100000));
+        $this->assertEquals('₹5,000', FundraisingCampaign::formatIndianCurrency(5000));
+        $this->assertEquals('₹750', FundraisingCampaign::formatIndianCurrency(750));
+        $this->assertEquals('₹0', FundraisingCampaign::formatIndianCurrency(0));
+        $this->assertEquals('₹0', FundraisingCampaign::formatIndianCurrency(null));
+    }
+
+    /**
+     * 12. Campaign single route (/donations/campaign/{id}) renders custom Open Graph preview metadata
+     */
+    public function test_campaign_route_renders_custom_open_graph_metadata()
+    {
+        $campaign = FundraisingCampaign::create([
+            'title' => 'TEMPLE RENOVATION AKKALREDDYPALLI',
+            'description' => 'Help us preserve and renovate this sacred temple.',
+            'target_amount' => 5000000.00,
+            'raised_amount' => 0.00,
+            'end_date' => Carbon::today()->addDays(90)->toDateString(),
+            'cover_image' => 'campaigns/covers/akkalareddy.jpg',
+            'status' => 'active',
+        ]);
+
+        $response = $this->get(route('donations.campaign', $campaign->id));
+
+        $response->assertStatus(200);
+        $response->assertSee('<meta property="og:title" content="ABVHPS — TEMPLE RENOVATION AKKALREDDYPALLI">', false);
+        $response->assertSee('<meta property="og:description" content="Help us preserve and renovate this sacred temple.">', false);
+        $response->assertSee('<meta property="og:url" content="' . $campaign->public_url . '">', false);
+        $response->assertSee('<meta property="og:image" content="' . $campaign->public_image_url . '">', false);
+        $response->assertSee('<meta name="twitter:card" content="summary_large_image">', false);
     }
 }
